@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
-from database import Hourly, Timestamp, User
+from models import Hourly, Timestamp, User
 
 # Load Discord Bot
 load_dotenv()
@@ -391,6 +391,8 @@ async def commands(ctx):
     embed.add_field(name="work", value="Work for some money. Level up to get more money.", inline=False)
     embed.add_field(name="hourly", value="Make $5000 every hour.", inline=False)
     await ctx.send(embed=embed)
+
+# Helper Functions
 
 def validate_bet(bet):
     bet = bet.replace('k', '000').replace('K','000').replace('m','000000').replace('M','000000')
