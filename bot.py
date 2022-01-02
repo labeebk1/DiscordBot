@@ -104,6 +104,56 @@ async def flip(ctx, bet: str):
 
     session.commit()
 
+@bot.command(name='dice', help='Do a 1 in 6 to 6x your money.')
+async def flip(ctx, bet: str, dice_bet: str):
+    # Query if User exists
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+
+    if not user:
+        user = create_user(ctx.author.name)
+
+    bet = validate_bet(bet)
+
+    if not bet:
+        await ctx.send("Invalid bet. Format's Available: 1, 1k, 1K, 1m, 1M")
+        return
+    
+    if not dice_bet or not dice_bet.isnumeric():
+        await ctx.send("Invalid Selection for Dice Roll. Format's Available: 1, 2, 3, 4, 5, 6")
+        return
+    else:
+        dice_bet = int(dice_bet)
+
+    if dice_bet not in [1,2,3,4,5,6]:
+        await ctx.send("Invalid Selection for Dice Roll. Format's Available: 1, 2, 3, 4, 5, 6")
+        return
+
+    elif bet > user.wallet:
+        await ctx.send('Insufficient Funds.')
+    else:
+        bot_bet = random.randint(1,6)
+        win = False
+        if bot_bet == dice_bet:
+            win = True
+
+        if win:
+            user.wallet += 6*bet
+            embed = discord.Embed(title='Dice', color=discord.Color.green())
+            embed.add_field(name=f'{ctx.author.display_name}', value="Holy shit You Won ^.^! :thumbsup:", inline=False)
+            embed.add_field(name="Wallet",
+                            value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+            await ctx.send(embed=embed)
+        else:
+            user.wallet -= bet
+            embed = discord.Embed(title='Dice', color=discord.Color.red())
+            embed.add_field(name=f'{ctx.author.display_name}', value="RIP You Lost X_X! :thumbsdown:", inline=False)
+            embed.add_field(name="Your Move", value=f"```{dice_bet}```", inline=True)
+            embed.add_field(name="Bot's Move", value=f"```{bot_bet}```", inline=True)
+            embed.add_field(name="Wallet",
+                            value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+            await ctx.send(embed=embed)
+
+    session.commit()
 
 @bot.command(name='rps', help='Do a Rock Paper Scissors match.')
 async def rps(ctx, bet: str, rps: str):
@@ -160,7 +210,7 @@ async def rps(ctx, bet: str, rps: str):
         if draw:
             embed = discord.Embed(title='Rock Paper Scissors', color=discord.Color.blue())
             embed.add_field(name=f'{ctx.author.display_name}', value="Draw!", inline=False)
-            embed.add_field(name="Your move", value=f"```{rps}```", inline=True)
+            embed.add_field(name="Your Move", value=f"```{rps}```", inline=True)
             embed.add_field(name="Bot's Move", value=f"```{bot_move}```", inline=True)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
@@ -170,7 +220,7 @@ async def rps(ctx, bet: str, rps: str):
             user.wallet += bet
             embed = discord.Embed(title='Rock Paper Scissors', color=discord.Color.green())
             embed.add_field(name=f'{ctx.author.display_name}', value="You Won ^.^! :thumbsup:", inline=False)
-            embed.add_field(name="Your move", value=f"```{rps}```", inline=True)
+            embed.add_field(name="Your Move", value=f"```{rps}```", inline=True)
             embed.add_field(name="Bot's Move", value=f"```{bot_move}```", inline=True)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
@@ -180,7 +230,7 @@ async def rps(ctx, bet: str, rps: str):
             user.wallet -= bet
             embed = discord.Embed(title='Rock Paper Scissors', color=discord.Color.red())
             embed.add_field(name=f'{ctx.author.display_name}', value="RIP You Lost X_X! :thumbsdown:", inline=False)
-            embed.add_field(name="Your move", value=f"```{rps}```", inline=True)
+            embed.add_field(name="Your Move", value=f"```{rps}```", inline=True)
             embed.add_field(name="Bot's Move", value=f"```{bot_move}```", inline=True)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
@@ -385,8 +435,9 @@ async def commands(ctx):
     embed = discord.Embed(title=f"Bot Commands", color=discord.Color.green())
     embed.add_field(name="bal", value="Check your balance or create your account.", inline=False)
     embed.add_field(name="buy", value="Buy some stuff. Format: !buy ItemId", inline=False)
-    embed.add_field(name="flip", value="Do a 50-50 to double your money. Format: !flip Amount.", inline=False)
+    embed.add_field(name="flip", value="Play a coin toss to double your money. Format: !flip Amount.", inline=False)
     embed.add_field(name="rps", value="Play Rock Paper Scissors. Format: !rps Amount r/p/s", inline=False)
+    embed.add_field(name="dice", value="Play Dice! Format: !dice Amount 1-6", inline=False)
     embed.add_field(name="give", value="Give money to a player. Format: !give @Player Amount.", inline=False)
     embed.add_field(name="work", value="Work for some money. Level up to get more money.", inline=False)
     embed.add_field(name="hourly", value="Make $5000 every hour.", inline=False)
