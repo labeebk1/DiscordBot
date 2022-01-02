@@ -26,7 +26,7 @@ session = Session(engine)
 async def on_ready():
     print(f'{bot.user.name} has connected to Discord!')
 
-@bot.command(name='bal', help='Check your balance or create your account.')
+@bot.command(name='bal', aliases=["b"], help='Check your balance or create your account.')
 async def balance(ctx):
     
     members = ctx.message.mentions
@@ -65,7 +65,7 @@ async def balance(ctx):
     else:
         await ctx.send('User not found.')
 
-@bot.command(name='flip', help='Do a 50-50 to double your money.')
+@bot.command(name='flip', aliases=["f"], help='Do a 50-50 to double your money.')
 async def flip(ctx, bet: str):
     # Query if User exists
     user = session.query(User).filter_by(name=ctx.author.name).first()
@@ -139,11 +139,11 @@ async def dice(ctx, bet: str, dice_bet: str):
             win = True
 
         if win:
-            user.wallet += 6*bet
+            user.wallet += 5*bet
             embed = discord.Embed(title='Dice', color=discord.Color.green())
             embed.add_field(name=f'{ctx.author.display_name}', value="Holy shit You Won ^.^! :thumbsup:", inline=False)
             embed.add_field(name="Winnings",
-                            value=f"```cs\n${6*bet:,d} Gold```", inline=False)
+                            value=f"```cs\n${5*bet:,d} Gold```", inline=False)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             embed.set_thumbnail(url=osrs_gp_url)
@@ -160,7 +160,7 @@ async def dice(ctx, bet: str, dice_bet: str):
 
     session.commit()
 
-@bot.command(name='roll', help='Roll against the bot.')
+@bot.command(name='roll', aliases=["r"], help='Roll against the bot.')
 async def roll(ctx, bet: str):
     # Query if User exists
     user = session.query(User).filter_by(name=ctx.author.name).first()
@@ -289,7 +289,7 @@ async def rps(ctx, bet: str, rps: str):
     
     session.commit()
 
-@bot.command(name='work', help='Make some money.')
+@bot.command(name='work', aliases=["w"], help='Make some money.')
 async def work(ctx):
     # Query if User exists
     user = session.query(User).filter_by(name=ctx.author.name).first()
@@ -347,7 +347,7 @@ async def work(ctx):
     
     session.commit()
 
-@bot.command(name='hourly', help='Make some money every hour.')
+@bot.command(name='hourly', aliases=["h"], help='Make some money every hour.')
 async def hourly(ctx):
     # Query if User exists
     user = session.query(User).filter_by(name=ctx.author.name).first()
@@ -433,7 +433,7 @@ async def miner(ctx):
                     value=f"```cs\n${miner.balance:,d} Gold```", inline=True)
     await ctx.send(embed=embed)
 
-@bot.command(name='collect', help='Collect your miners earnings.')
+@bot.command(name='collect', aliases=["coll"], help='Collect your miners earnings.')
 async def collect(ctx):
     # Query if User exists
     user = session.query(User).filter_by(name=ctx.author.name).first()
@@ -668,7 +668,7 @@ async def rob(ctx, tagged_user):
 
     session.commit()
 
-@bot.command(name='deposit', help='Deposit money to your bank.')
+@bot.command(name='deposit', aliases=["d"],  help='Deposit money to your bank.')
 async def deposit(ctx, amount):
     user = session.query(User).filter_by(name=ctx.author.name).first()
 
@@ -710,7 +710,7 @@ async def deposit(ctx, amount):
 
     session.commit()
 
-@bot.command(name='withdraw', help='Withdraw money to your bank.')
+@bot.command(name='withdraw', aliases=["w"], help='Withdraw money to your bank.')
 async def withdraw(ctx, amount):
     user = session.query(User).filter_by(name=ctx.author.name).first()
     
@@ -753,7 +753,7 @@ async def withdraw(ctx, amount):
         session.commit()
 
 
-@bot.command(name='leaderboard', help='Leaderboards.')
+@bot.command(name='leaderboard', aliases=["lb"], help='Leaderboards.')
 async def leaderboard(ctx, board_type: str):
 
     if board_type not in ['wallet', 'bank', 'level']:
