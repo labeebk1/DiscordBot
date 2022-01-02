@@ -41,7 +41,7 @@ class Miner(Base):
     user_id = Column(Integer, ForeignKey('users.id'))
     level = Column(Integer)
     balance = Column(Integer)
-    last_worked = Column(DateTime)  
+    last_worked = Column(DateTime)
 
 if __name__ == '__main__':
     engine = create_engine('sqlite:///gamble.db', echo = True)
