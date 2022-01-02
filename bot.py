@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
-from models import Hourly, Rob, Timestamp, User
+from models import Hourly, Miner, Rob, Timestamp, User
 
 # Load Discord Bot
 load_dotenv()
@@ -201,7 +201,6 @@ async def roll(ctx, bet: str):
             await ctx.send(embed=embed)
 
     session.commit()
-
 
 @bot.command(name='rps', help='Do a Rock Paper Scissors match.')
 async def rps(ctx, bet: str, rps: str):
@@ -401,6 +400,23 @@ async def hourly(ctx):
     
     session.commit()
 
+
+@bot.command(name='miner', help='Check your miners earnings.')
+async def miner(ctx):
+    # Query if User exists
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+    miner = session.query(Miner).filter_by(user=user.id).first()
+
+    if not user:
+        user = create_user(ctx.author.name)
+
+    embed = discord.Embed(title=f"{user.name}'s Miner", 
+                            color=discord.Color.random())
+
+    time_delta = datetime.datetime.now() - miner.last_worked
+    minutes = round(time_delta.total_seconds() / 60,0)
+
+
 @bot.command(name='buy', help='Buy some stuff.')
 async def buy(ctx, item=None):
     user = session.query(User).filter_by(name=ctx.author.name).first()
@@ -526,34 +542,63 @@ async def rob(ctx, tagged_user):
         else:
             time_delta = datetime.datetime.now() - recent_robbery.last_worked
             minutes = round(time_delta.total_seconds() / 60,0)
-            if minutes > 60:
+            if minutes > 20:
                 rob_user = True
                 recent_robbery.last_worked = datetime.datetime.now()
             else:
-                time_remaining = int(60-minutes)
+                time_remaining = int(20-minutes)
                 embed = discord.Embed(title=f'Robbery', color=discord.Color.red())
                 embed.add_field(name=f'{ctx.author.display_name}', value=f"{time_remaining} minutes remaining...", inline=False)
                 await ctx.send(embed=embed)
         
         if rob_user:
-            if recipient.shields > 0:
-                recipient.shields -= 1
-                user.wallet -= 1500
-                embed = discord.Embed(title=f"{recipient.name} defended the attack!", color=discord.Color.red())
-                embed.add_field(name="Shields Remaining",
-                                value=f"```cs\n{str(recipient.shields)}```", inline=True)
-                await ctx.send(embed=embed)
-            else:
-                proportion_to_take = random.uniform(0,1)
-                amount_to_take = int(proportion_to_take * recipient.wallet)
-                user.wallet += amount_to_take
-                recipient.wallet -= amount_to_take
+            rob_result = random.randint(1,10)
+            if rob_result >= 6:
+                if recipient.shields > 0:
+                    recipient.shields -= 1
+                    user.wallet -= 1500
+                    embed = discord.Embed(title=f"{recipient.name} defended the attack!", color=discord.Color.red())
+                    embed.add_field(name="Shields Remaining",
+                                    value=f"```cs\n{str(recipient.shields)}```", inline=True)
+                    await ctx.send(embed=embed)
+                else:
+                    proportion_to_take = random.uniform(0,1)
+                    amount_to_take = int(proportion_to_take * recipient.wallet)
+                    user.wallet += amount_to_take
+                    recipient.wallet -= amount_to_take
 
-                embed = discord.Embed(title=f"You Robbed {recipient.name}", color=discord.Color.green())
+                    embed = discord.Embed(title=f"You Robbed {recipient.name}", color=discord.Color.green())
+                    embed.add_field(name=f"Amount Stolen",
+                                    value=f"```cs\n${amount_to_take:,d} Gold```", inline=False)
+                    embed.add_field(name=f"{recipient.name}'s' Wallet",
+                                    value=f"```cs\n${recipient.wallet:,d} Gold```", inline=True)
+                    embed.add_field(name=f"Your Wallet",
+                                    value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
+                    await ctx.send(embed=embed)
+
+            elif rob_result >= 3:
+                user.wallet -= 1500
+                embed = discord.Embed(title=f"{recipient.name} got away!", color=discord.Color.red())
                 embed.add_field(name=f"Amount Stolen",
-                                value=f"```cs\n${amount_to_take:,d} Gold```", inline=False)
+                                value=f"```cs\n${0} Gold```", inline=False)
+                await ctx.send(embed=embed)
+
+            else:
+                proportion_to_give = random.uniform(0,0.5)
+                amount_to_give = max(int(proportion_to_give * user.wallet), int(0.1 * user.bank))
+                
+                if amount_to_give > user.wallet:
+                    user.bank -= amount_to_give
+                else:
+                    user.wallet -= amount_to_give
+
+                recipient.wallet += amount_to_give
+
+                embed = discord.Embed(title=f"You lost the fight and {recipient.name} Robbed you back!", color=discord.Color.red())
+                embed.add_field(name=f"Amount Lost",
+                                value=f"```cs\n${amount_to_give:,d} Gold```", inline=False)
                 embed.add_field(name=f"{recipient.name}'s' Wallet",
-                                value=f"```cs\n${recipient.wallet:,d} Gold```", inline=False)
+                                value=f"```cs\n${recipient.wallet:,d} Gold```", inline=True)
                 embed.add_field(name=f"Your Wallet",
                                 value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
                 await ctx.send(embed=embed)
@@ -680,7 +725,13 @@ def create_user(name):
         bank=0,
         shields=0
     )
+    miner = Miner(
+        user_id=user.id,
+        balance=0,
+        last_worked=datetime.datetime.now()
+    )
     session.add(user)
+    session.add(miner)
     session.commit()
     
     return user

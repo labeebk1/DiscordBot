@@ -35,6 +35,14 @@ class Rob(Base):
     user_id = Column(Integer, ForeignKey('users.id'))
     last_worked = Column(DateTime)  
 
+class Miner(Base):
+    __tablename__ = 'miner'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    level = Column(Integer)
+    balance = Column(Integer)
+    last_worked = Column(DateTime)  
+
 if __name__ == '__main__':
     engine = create_engine('sqlite:///gamble.db', echo = True)
     Base.metadata.create_all(engine)
