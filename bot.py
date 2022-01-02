@@ -289,7 +289,7 @@ async def rps(ctx, bet: str, rps: str):
     
     session.commit()
 
-@bot.command(name='work', aliases=["w"], help='Make some money.')
+@bot.command(name='work', help='Make some money.')
 async def work(ctx):
     # Query if User exists
     user = session.query(User).filter_by(name=ctx.author.name).first()
