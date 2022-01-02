@@ -12,7 +12,7 @@ class User(Base):
     level = Column(Integer)
     wallet = Column(Integer)
     bank = Column(Integer)
-    investments = Column(Integer)
+    shields = Column(Integer)
 
     def __repr__(self):
         return "<User(name='%s')>" % (self.name)

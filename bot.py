@@ -16,7 +16,7 @@ from models import Hourly, Timestamp, User
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
-bot = commands.Bot(command_prefix='!')
+bot = commands.Bot(command_prefix='.')
 
 # Load Database
 engine = create_engine('sqlite:///gamble.db', echo=False)
@@ -58,6 +58,8 @@ async def balance(ctx):
                         value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
         embed.add_field(name="Bank",
                         value=f"```cs\n${user.bank:,d} Gold```", inline=True)
+
+        embed.set_footer(text=f"{user.shields} Active Shields", icon_url = "https://thumbs.dreamstime.com/b/well-organized-fully-editable-antivirus-protection-security-icon-any-use-like-print-media-web-commercial-use-any-kind-158454387.jpg")
 
         await ctx.send(embed=embed)
     else:
@@ -105,7 +107,7 @@ async def flip(ctx, bet: str):
     session.commit()
 
 @bot.command(name='dice', help='Do a 1 in 6 to 6x your money.')
-async def flip(ctx, bet: str, dice_bet: str):
+async def dice(ctx, bet: str, dice_bet: str):
     # Query if User exists
     user = session.query(User).filter_by(name=ctx.author.name).first()
 
@@ -362,8 +364,10 @@ async def buy(ctx, item=None):
     else:
         if not item:
             level_up_cost = 10 ** (user.level + 4)
+            shield_cost = int(1.5 * (10 ** (user.level + 2)))
             embed = discord.Embed(title=f"{ctx.author.display_name}'s Shop", color=discord.Color.random())
             embed.add_field(name='[ID: 1] Level Up', value=f"```cs\n${level_up_cost:,d} Gold```", inline=False)
+            embed.add_field(name='[ID: 2] Shield', value=f"```cs\n${shield_cost:,d} Gold```", inline=False)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
             await ctx.send(embed=embed)
@@ -380,6 +384,18 @@ async def buy(ctx, item=None):
                                 value=f"```cs\n{str(user.level)}```", inline=True)
                 await ctx.send(embed=embed)
 
+        elif item == '2':
+            shield_cost = int(1.5 * (10 ** (user.level + 2)))
+
+            if user.wallet < shield_cost:
+                await ctx.send('Insufficient Funds to buy a shield.')
+            else:
+                user.wallet -= shield_cost
+                user.shields += 1
+                embed = discord.Embed(title=f"{ctx.author.display_name} has bought a shield!", color=discord.Color.random())
+                embed.add_field(name="Shields",
+                                value=f"```cs\n{str(user.shields)}```", inline=True)
+                await ctx.send(embed=embed)
         else:
             await ctx.send('Item not in shop.')
 
@@ -430,6 +446,92 @@ async def give(ctx, tagged_user, amount):
 
     session.commit()
 
+
+@bot.command(name='deposit', help='Deposit money to your bank.')
+async def deposit(ctx, amount):
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+
+    if amount == 'all':
+        user.bank += user.wallet
+        user.wallet = 0
+
+        embed = discord.Embed(title=f"Deposited Complete!", color=discord.Color.green())
+        embed.set_thumbnail(url=ctx.author.avatar_url)
+        embed.add_field(name="Level",
+                        value=f"```cs\n{str(user.level)}```", inline=True)
+        embed.add_field(name="Wallet",
+                        value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
+        embed.add_field(name="Bank",
+                        value=f"```cs\n${user.bank:,d} Gold```", inline=True)
+        await ctx.send(embed=embed)
+
+    else:
+        amount = validate_bet(amount)
+                
+        if not amount:
+            await ctx.send('Invalid amount to deposit.')
+        
+        if amount > user.wallet:
+            await ctx.send("You don't own that kind of money...")
+
+        else:
+            user.wallet -= amount
+            user.bank += amount
+            embed = discord.Embed(title=f"Deposited Complete!", color=discord.Color.green())
+            embed.set_thumbnail(url=ctx.author.avatar_url)
+            embed.add_field(name="Level",
+                            value=f"```cs\n{str(user.level)}```", inline=True)
+            embed.add_field(name="Wallet",
+                            value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
+            embed.add_field(name="Bank",
+                            value=f"```cs\n${user.bank:,d} Gold```", inline=True)
+            await ctx.send(embed=embed)
+
+    session.commit()
+
+
+@bot.command(name='withdraw', help='Withdraw money to your bank.')
+async def withdraw(ctx, amount):
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+    
+    if amount == 'all':
+        user.wallet += user.bank
+        user.bank = 0
+
+        embed = discord.Embed(title=f"Withdraw Complete!", color=discord.Color.green())
+        embed.set_thumbnail(url=ctx.author.avatar_url)
+        embed.add_field(name="Level",
+                        value=f"```cs\n{str(user.level)}```", inline=True)
+        embed.add_field(name="Wallet",
+                        value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
+        embed.add_field(name="Bank",
+                        value=f"```cs\n${user.bank:,d} Gold```", inline=True)
+        await ctx.send(embed=embed)
+    
+    else:
+        amount = validate_bet(amount)
+                
+        if not amount:
+            await ctx.send('Invalid amount to deposit.')
+
+        elif amount > user.bank:
+            await ctx.send("You don't own that kind of money...")
+
+        else:
+            user.bank -= amount
+            user.wallet += amount
+            embed = discord.Embed(title=f"Withdraw Complete!", color=discord.Color.green())
+            embed.set_thumbnail(url=ctx.author.avatar_url)
+            embed.add_field(name="Level",
+                            value=f"```cs\n{str(user.level)}```", inline=True)
+            embed.add_field(name="Wallet",
+                            value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
+            embed.add_field(name="Bank",
+                            value=f"```cs\n${user.bank:,d} Gold```", inline=True)
+            await ctx.send(embed=embed)
+
+        session.commit()
+
 @bot.command(name='cmd', help='Bot Commands.')
 async def commands(ctx):
     embed = discord.Embed(title=f"Bot Commands", color=discord.Color.green())
@@ -462,7 +564,7 @@ def create_user(name):
         level=1,
         wallet=1000,
         bank=0,
-        investments=0
+        shields=0
     )
     session.add(user)
     session.commit()
