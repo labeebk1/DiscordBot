@@ -752,6 +752,30 @@ async def withdraw(ctx, amount):
 
         session.commit()
 
+
+@bot.command(name='leaderboard', help='Leaderboards.')
+async def leaderboard(ctx, board_type: str):
+
+    if board_type not in ['wallet', 'bank', 'level']:
+        await ctx.send('Command should have an argument of wallet, bank, or level. Example: .leaderboard wallet')
+
+    else:
+        embed = discord.Embed(title=f"Leaderboards by {board_type}", color=discord.Color.green())
+        if board_type == 'wallet':
+            users = session.query(User).order_by(User.wallet.desc()).limit(5).all()
+            for idx, user in enumerate(users):
+                embed.add_field(name=f"{idx+1}. {user.name}", value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+        elif board_type == 'bank':
+            users = session.query(User).order_by(User.bank.desc()).limit(5).all()
+            for idx, user in enumerate(users):
+                embed.add_field(name=f"{idx+1}. {user.name}", value=f"```cs\nLevel {user.bank:,d}```", inline=False)
+        elif board_type == 'level':
+            users = session.query(User).order_by(User.level.desc()).limit(5).all()
+            for idx, user in enumerate(users):
+                embed.add_field(name=f"{idx+1}. {user.name}", value=f"```cs\n${user.level:,d} Gold```", inline=False)
+        await ctx.send(embed=embed)
+
+
 @bot.command(name='cmd', help='Bot Commands.')
 async def commands(ctx):
     embed = discord.Embed(title=f"Bot Commands", color=discord.Color.green())
@@ -767,6 +791,7 @@ async def commands(ctx):
     embed.add_field(name="hourly", value="Make $5000 every hour.", inline=False)
     embed.add_field(name="miner", value="Check the status of your miner.", inline=False)
     embed.add_field(name="collect", value="Collect money from your miner.", inline=False)
+    embed.add_field(name="leaderboard", value="Check leaderboards by wallet, level, bank. Format: .leaderboard wallet", inline=False)
     await ctx.send(embed=embed)
 
 # Helper Functions
