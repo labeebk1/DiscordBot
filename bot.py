@@ -610,7 +610,7 @@ async def rob(ctx, tagged_user):
         else:
             time_delta = datetime.datetime.now() - recent_robbery.last_worked
             minutes = round(time_delta.total_seconds() / 60,0)
-            if minutes > 20:
+            if True: #minutes > 20:
                 rob_user = True
                 recent_robbery.last_worked = datetime.datetime.now()
             else:
