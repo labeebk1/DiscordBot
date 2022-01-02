@@ -490,6 +490,11 @@ async def buy(ctx, item=None):
 
             if user.wallet < shield_cost:
                 await ctx.send('Insufficient Funds to buy a shield.')
+            elif user.shields >= 3:
+                embed = discord.Embed(title=f"{ctx.author.display_name} already has max number of shields!", color=discord.Color.red())
+                embed.add_field(name="Shields",
+                                value=f"```cs\n{str(user.shields)}```", inline=True)
+                await ctx.send(embed=embed)
             else:
                 user.wallet -= shield_cost
                 user.shields += 1
