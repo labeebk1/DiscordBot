@@ -29,6 +29,12 @@ class Hourly(Base):
     user_id = Column(Integer, ForeignKey('users.id'))
     last_worked = Column(DateTime)  
 
+class Rob(Base):
+    __tablename__ = 'rob'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    last_worked = Column(DateTime)  
+
 if __name__ == '__main__':
     engine = create_engine('sqlite:///gamble.db', echo = True)
     Base.metadata.create_all(engine)

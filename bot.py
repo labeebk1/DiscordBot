@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
-from models import Hourly, Timestamp, User
+from models import Hourly, Rob, Timestamp, User
 
 # Load Discord Bot
 load_dotenv()
@@ -156,6 +156,52 @@ async def dice(ctx, bet: str, dice_bet: str):
             await ctx.send(embed=embed)
 
     session.commit()
+
+@bot.command(name='roll', help='Roll against the bot.')
+async def roll(ctx, bet: str):
+    # Query if User exists
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+
+    if not user:
+        user = create_user(ctx.author.name)
+
+    bet = validate_bet(bet)
+
+    if not bet:
+        await ctx.send("Invalid bet. Format's Available: 1, 1k, 1K, 1m, 1M")
+        return
+    
+    if bet > user.wallet:
+        await ctx.send('Insufficient Funds.')
+    else:
+        bot_bet = random.randint(1,100)
+        user_bet = random.randint(1,100)
+
+        win = False
+        if user_bet >= bot_bet:
+            win = True
+
+        if win:
+            user.wallet += bet
+            embed = discord.Embed(title='Roll', color=discord.Color.green())
+            embed.add_field(name=f'{ctx.author.display_name}', value="Holy shit You Won ^.^! :thumbsup:", inline=False)
+            embed.add_field(name="Your Roll", value=f"```{user_bet}```", inline=True)
+            embed.add_field(name="Bot's Roll", value=f"```{bot_bet}```", inline=True)
+            embed.add_field(name="Wallet",
+                            value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+            await ctx.send(embed=embed)
+        else:
+            user.wallet -= bet
+            embed = discord.Embed(title='Roll', color=discord.Color.red())
+            embed.add_field(name=f'{ctx.author.display_name}', value="RIP You Lost X_X! :thumbsdown:", inline=False)
+            embed.add_field(name="Your Roll", value=f"```{user_bet}```", inline=True)
+            embed.add_field(name="Bot's Roll", value=f"```{bot_bet}```", inline=True)
+            embed.add_field(name="Wallet",
+                            value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+            await ctx.send(embed=embed)
+
+    session.commit()
+
 
 @bot.command(name='rps', help='Do a Rock Paper Scissors match.')
 async def rps(ctx, bet: str, rps: str):
@@ -446,6 +492,73 @@ async def give(ctx, tagged_user, amount):
 
     session.commit()
 
+@bot.command(name='rob', help='Rob money from a player.')
+async def rob(ctx, tagged_user):
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+    
+    members = ctx.message.mentions
+    if members:
+        member_name = members[0].name
+
+    if not members:
+        await ctx.send('You must tag someone to rob them.')
+        return
+
+    recipient = session.query(User).filter_by(name=member_name).first()
+
+    if not recipient:
+        await ctx.send('User does not exist. They must create an account by typing !bal')
+        
+    elif user.wallet < 1500:
+        await ctx.send("You need at least 1500 Gold to rob someone")
+
+    else:
+        recent_robbery = session.query(Rob).filter_by(user_id=user.id).first()
+        
+        rob_user = False
+        if not recent_robbery:
+            rob_user = True
+            timestamp = Rob(
+                user_id = user.id,
+                last_worked=datetime.datetime.now()
+            )
+            session.add(timestamp)
+        else:
+            time_delta = datetime.datetime.now() - recent_robbery.last_worked
+            minutes = round(time_delta.total_seconds() / 60,0)
+            if minutes > 60:
+                rob_user = True
+                recent_robbery.last_worked = datetime.datetime.now()
+            else:
+                time_remaining = int(60-minutes)
+                embed = discord.Embed(title=f'Robbery', color=discord.Color.red())
+                embed.add_field(name=f'{ctx.author.display_name}', value=f"{time_remaining} minutes remaining...", inline=False)
+                await ctx.send(embed=embed)
+        
+        if rob_user:
+            if recipient.shields > 0:
+                recipient.shields -= 1
+                user.wallet -= 1500
+                embed = discord.Embed(title=f"{recipient.name} defended the attack!", color=discord.Color.red())
+                embed.add_field(name="Shields Remaining",
+                                value=f"```cs\n{str(recipient.shields)}```", inline=True)
+                await ctx.send(embed=embed)
+            else:
+                proportion_to_take = random.uniform(0,1)
+                amount_to_take = int(proportion_to_take * recipient.wallet)
+                user.wallet += amount_to_take
+                recipient.wallet -= amount_to_take
+
+                embed = discord.Embed(title=f"You Robbed {recipient.name}", color=discord.Color.green())
+                embed.add_field(name=f"Amount Stolen",
+                                value=f"```cs\n${amount_to_take:,d} Gold```", inline=False)
+                embed.add_field(name=f"{recipient.name}'s' Wallet",
+                                value=f"```cs\n${recipient.wallet:,d} Gold```", inline=False)
+                embed.add_field(name=f"Your Wallet",
+                                value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
+                await ctx.send(embed=embed)
+
+    session.commit()
 
 @bot.command(name='deposit', help='Deposit money to your bank.')
 async def deposit(ctx, amount):
@@ -488,7 +601,6 @@ async def deposit(ctx, amount):
             await ctx.send(embed=embed)
 
     session.commit()
-
 
 @bot.command(name='withdraw', help='Withdraw money to your bank.')
 async def withdraw(ctx, amount):
@@ -536,11 +648,13 @@ async def withdraw(ctx, amount):
 async def commands(ctx):
     embed = discord.Embed(title=f"Bot Commands", color=discord.Color.green())
     embed.add_field(name="bal", value="Check your balance or create your account.", inline=False)
-    embed.add_field(name="buy", value="Buy some stuff. Format: !buy ItemId", inline=False)
-    embed.add_field(name="flip", value="Play a coin toss to double your money. Format: !flip Amount.", inline=False)
-    embed.add_field(name="rps", value="Play Rock Paper Scissors. Format: !rps Amount r/p/s", inline=False)
-    embed.add_field(name="dice", value="Play Dice! Format: !dice Amount 1-6", inline=False)
-    embed.add_field(name="give", value="Give money to a player. Format: !give @Player Amount.", inline=False)
+    embed.add_field(name="buy", value="Buy some stuff. Format: .buy ItemId", inline=False)
+    embed.add_field(name="flip", value="Play a coin toss to double your money. Format: .flip Amount.", inline=False)
+    embed.add_field(name="rps", value="Play Rock Paper Scissors. Format: .rps Amount r/p/s", inline=False)
+    embed.add_field(name="dice", value="Play Dice. Format: .dice Amount 1-6", inline=False)
+    embed.add_field(name="roll", value="Roll against the bot (1 to 100). Winner takes all!", inline=False)
+    embed.add_field(name="give", value="Give money to a player. Format: .give @Player Amount.", inline=False)
+    embed.add_field(name="rob", value="Rob the shit out of a player. Format: .rob @Player", inline=False)
     embed.add_field(name="work", value="Work for some money. Level up to get more money.", inline=False)
     embed.add_field(name="hourly", value="Make $5000 every hour.", inline=False)
     await ctx.send(embed=embed)
