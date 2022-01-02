@@ -768,11 +768,11 @@ async def leaderboard(ctx, board_type: str):
         elif board_type == 'bank':
             users = session.query(User).order_by(User.bank.desc()).limit(5).all()
             for idx, user in enumerate(users):
-                embed.add_field(name=f"{idx+1}. {user.name}", value=f"```cs\nLevel {user.bank:,d}```", inline=False)
+                embed.add_field(name=f"{idx+1}. {user.name}", value=f"```cs\n${user.bank:,d} Gold```", inline=False)
         elif board_type == 'level':
             users = session.query(User).order_by(User.level.desc()).limit(5).all()
             for idx, user in enumerate(users):
-                embed.add_field(name=f"{idx+1}. {user.name}", value=f"```cs\n${user.level:,d} Gold```", inline=False)
+                embed.add_field(name=f"{idx+1}. {user.name}", value=f"```cs\nLevel {user.level:,d}```", inline=False)
         await ctx.send(embed=embed)
 
 
