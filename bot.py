@@ -485,7 +485,7 @@ async def buy(ctx, item=None):
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
             await ctx.send(embed=embed)
 
-        if item == '1':
+        elif item == '1':
             shield_cost = int(1.5 * (10 ** (user.level + 2)))
 
             if user.wallet < shield_cost:
@@ -760,7 +760,7 @@ async def commands(ctx):
     embed.add_field(name="flip", value="Play a coin toss to double your money. Format: .flip Amount.", inline=False)
     embed.add_field(name="rps", value="Play Rock Paper Scissors. Format: .rps Amount r/p/s", inline=False)
     embed.add_field(name="dice", value="Play Dice. Format: .dice Amount 1-6", inline=False)
-    embed.add_field(name="roll", value="Roll against the bot (1 to 100). Winner takes all!", inline=False)
+    embed.add_field(name="roll", value="Roll against the bot (1 to 100)", inline=False)
     embed.add_field(name="give", value="Give money to a player. Format: .give @Player Amount.", inline=False)
     embed.add_field(name="rob", value="Rob the shit out of a player. Format: .rob @Player", inline=False)
     embed.add_field(name="work", value="Work for some money. Level up to get more money.", inline=False)
