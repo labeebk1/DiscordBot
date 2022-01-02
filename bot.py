@@ -531,7 +531,7 @@ async def buy(ctx, item=None):
 
     session.commit()
 
-@bot.command(name='give', help='Give money to a player.')
+@bot.command(name='give', aliases=["t","transfer"], help='Give money to a player.')
 async def give(ctx, tagged_user, amount):
     user = session.query(User).filter_by(name=ctx.author.name).first()
     
@@ -610,7 +610,7 @@ async def rob(ctx, tagged_user):
         else:
             time_delta = datetime.datetime.now() - recent_robbery.last_worked
             minutes = round(time_delta.total_seconds() / 60,0)
-            if True: #minutes > 20:
+            if minutes > 20:
                 rob_user = True
                 recent_robbery.last_worked = datetime.datetime.now()
             else:
