@@ -19,7 +19,7 @@ GUILD = os.getenv('DISCORD_GUILD')
 bot = commands.Bot(command_prefix='!')
 
 # Load Database
-engine = create_engine('sqlite:///gamble.db', echo=True)
+engine = create_engine('sqlite:///gamble.db', echo=False)
 session = Session(engine)
 
 @bot.event
