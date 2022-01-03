@@ -233,26 +233,60 @@ async def blackjack(ctx, bet: str):
         
         embed = discord.Embed(title='Blackjack', color=discord.Color.random())
 
-        player_card = Card()
-        bot_card = Card()
-
-        player_value = player_card.value
-        bot_value = bot_card.value
-
-        embed.add_field(name=f'Your Hand', value=f"{player_card}", inline=True)
-        embed.add_field(name=f'Total', value=f"```cs\n{player_value}```", inline=False)
-        embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=False)
-        embed.add_field(name=f'Total', value=f"```cs\n{bot_value}```", inline=True)
-        embed.add_field(name=f'Your Move', value=f"hit (or h), stand (or s)", inline=False)
-        embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
-        message = await ctx.send(embed=embed)
-
-        game_running = True
+        player_cards = []
+        dealer_cards = []
+        player_score = 0
+        dealer_score = 0
+        game = True
         win = False
-        bot_playing = False
 
-        while game_running:
+        while len(player_cards) < 2:
+            player_card = Card()
+            player_cards.append(player_card)
+            player_score += player_card.card_value
 
+            if len(player_cards) == 2:
+                if player_cards[0].card_value == 11 and player_cards[1].card_value == 11:
+                    player_cards[0].card_value = 1
+                    player_score -= 10
+            else:
+                dealer_card = Card()
+                dealer_cards.append(dealer_card)
+                dealer_score += dealer_card.card_value
+
+            player_cards_display = ' '.join([card.card + card.suit for card in player_cards])
+            dealer_cards_display = ' '.join([card.card + card.suit for card in dealer_cards])
+            
+            if player_score == 21:
+                game = False
+                win = True
+
+        if game:
+            embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=True)
+            embed.add_field(name=f'Total', value=f"```cs\n{player_score}```", inline=False)
+            embed.add_field(name=f"Bot's Hand", value=f"{dealer_cards_display}", inline=False)
+            embed.add_field(name=f'Total', value=f"```cs\n{dealer_score}```", inline=True)
+            embed.add_field(name=f'Your Move', value=f"hit (or h), stand (or s)", inline=False)
+            embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
+            message = await ctx.send(embed=embed)
+
+        if not game and win:
+            # blackjack off the bat
+            user.wallet += bet
+            new_embed = discord.Embed(title='Blackjack - Win!', color=discord.Color.green())
+            new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=False)
+            new_embed.add_field(name=f'Total', value=f"```cs\n{player_score}```", inline=False)
+            new_embed.add_field(name=f"Bot's Hand", value=f"{dealer_cards_display}", inline=False)
+            new_embed.add_field(name=f'Total', value=f"```cs\n{dealer_score}```", inline=False)
+            new_embed.add_field(name="Result",
+                value=f"BLACKJACK! ^.^", inline=False)
+            new_embed.add_field(name="Wallet",
+                value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+            new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
+            await ctx.send(embed=new_embed)
+            return
+
+        while player_score < 21 and game:
             reply = await bot.wait_for(event="message", check=author_check(ctx.author), timeout=30.0)
             
             while reply.content not in ['hit', 'stand', 'h', 's']:
@@ -260,79 +294,90 @@ async def blackjack(ctx, bet: str):
                 reply = await bot.wait_for(event="message", check=author_check(ctx.author), timeout=30.0)
             
             if reply.content in ['hit', 'h']:
-                next_card = Card()
-                player_card = str(player_card) + str(next_card)
-                player_value += next_card.value
+                
+                player_card = Card()
+                player_cards.append(player_card)
+                player_score += player_card.card_value
 
-                if player_value > 21:
-                    game_running = False
-                
-                if player_value == 21:
-                    game_running = False
-                    win = True
-                
+                # Updating player score in case player's card have ace in them
+                c = 0
+                while player_score > 21 and c < len(player_cards):
+                    if player_cards[c].card_value == 11:
+                        player_cards[c].card_value = 1
+                        player_score -= 10
+                        c += 1
+                    else:
+                        c += 1 
+
             if reply.content in ['stand', 's']:
-                game_running = False
-                bot_playing = True
+                game = False
             
+            player_cards_display = ' '.join([card.card + card.suit for card in player_cards])
             new_embed = discord.Embed(title='Blackjack', color=discord.Color.random())
-            new_embed.add_field(name=f'Your Hand', value=f"{player_card}", inline=True)
-            new_embed.add_field(name=f'Total', value=f"```cs\n{player_value}```", inline=False)
-            new_embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=False)
-            new_embed.add_field(name=f'Total', value=f"```cs\n{bot_value}```", inline=False)
+            new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=True)
+            new_embed.add_field(name=f'Total', value=f"```cs\n{player_score}```", inline=False)
+            new_embed.add_field(name=f"Bot's Hand", value=f"{dealer_cards_display}", inline=False)
+            new_embed.add_field(name=f'Total', value=f"```cs\n{dealer_score}```", inline=False)
             new_embed.add_field(name=f'Your Move', value=f"hit (or h), stand (or s)", inline=False)
             new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
             await message.edit(embed=new_embed)
 
-        while bot_playing:
-            asyncio.sleep(1)
-            next_card = Card()
-            bot_card = str(bot_card) + str(next_card)
-            bot_value += next_card.value
+        while dealer_score < 17:
 
-            if bot_value > 17:
-                bot_playing = False
-                if bot_value < player_value:
-                    win = True
-            
-            elif bot_value > 21:
-                bot_playing = False
-                win = True
+            dealer_card = Card()
+            dealer_cards.append(dealer_card)
+            dealer_score += dealer_card.card_value
 
+            # Updating player score in case player's card have ace in them
+            c = 0
+            while dealer_score > 21 and c < len(dealer_cards):
+                if dealer_cards[c].card_value == 11:
+                    dealer_cards[c].card_value = 1
+                    dealer_score -= 10
+                    c += 1
+                else:
+                    c += 1
+
+            dealer_cards_display = ' '.join([card.card + card.suit for card in dealer_cards])
             new_embed = discord.Embed(title="Blackjack - Bot's Turn", color=discord.Color.random())
-            new_embed.add_field(name=f'Your Hand', value=f"{player_card}", inline=True)
-            new_embed.add_field(name=f'Total', value=f"```cs\n{player_value}```", inline=False)
-            new_embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=False)
-            new_embed.add_field(name=f'Total', value=f"```cs\n{bot_value}```", inline=False)
+            new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=True)
+            new_embed.add_field(name=f'Total', value=f"```cs\n{player_score}```", inline=False)
+            new_embed.add_field(name=f"Bot's Hand", value=f"{dealer_cards_display}", inline=False)
+            new_embed.add_field(name=f'Total', value=f"```cs\n{dealer_score}```", inline=False)
             new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
             await message.edit(embed=new_embed)
+            asyncio.sleep(1)
 
-        if not win:
-            user.wallet -= bet
-            new_embed = discord.Embed(title='Blackjack - Loss', color=discord.Color.red())
-            new_embed.add_field(name=f'Your Hand', value=f"{player_card}", inline=False)
-            new_embed.add_field(name=f'Total', value=f"```cs\n{player_value}```", inline=False)
-            new_embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=False)
-            new_embed.add_field(name=f'Total', value=f"```cs\n{bot_value}```", inline=False)
-            new_embed.add_field(name="Result",
-                value=f"You lose! X_X", inline=False)
-            new_embed.add_field(name="Wallet",
-                value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
-            new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
-            await message.edit(embed=new_embed)
-        else:
+        if dealer_score > 21 or dealer_score < player_score:
+            win = True
+
+        if win:
             user.wallet += bet
             new_embed = discord.Embed(title='Blackjack - Win!', color=discord.Color.green())
-            new_embed.add_field(name=f'Your Hand', value=f"{player_card}", inline=False)
-            new_embed.add_field(name=f'Total', value=f"```cs\n{player_value}```", inline=False)
-            new_embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=False)
-            new_embed.add_field(name=f'Total', value=f"```cs\n{bot_value}```", inline=False)
+            new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=False)
+            new_embed.add_field(name=f'Total', value=f"```cs\n{player_score}```", inline=False)
+            new_embed.add_field(name=f"Bot's Hand", value=f"{dealer_cards_display}", inline=False)
+            new_embed.add_field(name=f'Total', value=f"```cs\n{dealer_score}```", inline=False)
             new_embed.add_field(name="Result",
                 value=f"You Win! ^.^", inline=False)
             new_embed.add_field(name="Wallet",
                 value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
             await message.edit(embed=new_embed)
+        else:
+            user.wallet -= bet
+            new_embed = discord.Embed(title='Blackjack - Loss', color=discord.Color.red())
+            new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=False)
+            new_embed.add_field(name=f'Total', value=f"```cs\n{player_score}```", inline=False)
+            new_embed.add_field(name=f"Bot's Hand", value=f"{dealer_cards_display}", inline=False)
+            new_embed.add_field(name=f'Total', value=f"```cs\n{dealer_score}```", inline=False)
+            new_embed.add_field(name="Result",
+                value=f"You lose! X_X", inline=False)
+            new_embed.add_field(name="Wallet",
+                value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+            new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
+            await message.edit(embed=new_embed)
+
 
     session.commit()
 
