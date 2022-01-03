@@ -11,6 +11,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from models import Hourly, Miner, Rob, Timestamp, User
+from card import Card
 
 # Load Discord Bot
 load_dotenv()
@@ -227,17 +228,15 @@ async def blackjack(ctx, bet: str):
         
         embed = discord.Embed(title='Blackjack', color=discord.Color.random())
 
-        player_card = ' '.join([random.choice(suits), random.choice(cards)])
-        player_card_value = card_map[player_card[1]]
-        bot_card = ' '.join([random.choice(suits), random.choice(cards)])
-        bot_card_value = card_map[bot_card[1]]
+        player_card = Card()
+        bot_card = Card()
+
         embed.add_field(name=f'Your Hand', value=f"{player_card}", inline=True)
-        embed.add_field(name=f'Total', value=f"```cs\n{player_card_value}```", inline=False)
+        embed.add_field(name=f'Total', value=f"```cs\n{player_card.value}```", inline=False)
         embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=True)
-        embed.add_field(name=f'Total', value=f"```cs\n{bot_card_value}```", inline=False)
+        embed.add_field(name=f'Total', value=f"```cs\n{bot_card.value}```", inline=False)
         embed.set_thumbnail(url='https://cdn1.iconfinder.com/data/icons/sin-city-memories/128/poker-512.png')
         await ctx.send(embed=embed)
-
 
 
     session.commit()
@@ -927,22 +926,5 @@ miner_level_urs = {
 }
 
 osrs_gp_url = 'https://oldschool.runescape.wiki/images/Coins_detail.png?404bc'
-
-suits = ['hearts', 'spades', 'clubs', 'diamonds']
-cards = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
-card_map = {
-    'A': 1,
-    '2': 2,
-    '3': 3,
-    '4': 4,
-    '5': 5,
-    '6': 6,
-    '7': 7,
-    '8': 8,
-    '9': 9,
-    'J': 10,
-    'Q': 10,
-    'K': 10
-}
 
 bot.run(TOKEN)
