@@ -285,6 +285,7 @@ async def blackjack(ctx, bet: str):
             await message.edit(embed=new_embed)
 
         while bot_playing:
+            asyncio.sleep(1)
             next_card = Card()
             bot_card = str(bot_card) + str(next_card)
             bot_value += next_card.value
@@ -305,7 +306,6 @@ async def blackjack(ctx, bet: str):
             new_embed.add_field(name=f'Total', value=f"```cs\n{bot_value}```", inline=False)
             new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
             await message.edit(embed=new_embed)
-            asyncio.sleep(1)
 
         if not win:
             user.wallet -= bet
@@ -314,13 +314,12 @@ async def blackjack(ctx, bet: str):
             new_embed.add_field(name=f'Total', value=f"```cs\n{player_value}```", inline=False)
             new_embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=False)
             new_embed.add_field(name=f'Total', value=f"```cs\n{bot_value}```", inline=False)
-            new_embed.add_field(name="Earnings",
-                value=f"```cs\n$0 Gold```", inline=False)
+            new_embed.add_field(name="Result",
+                value=f"You lose! X_X", inline=False)
             new_embed.add_field(name="Wallet",
                 value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
             await message.edit(embed=new_embed)
-
         else:
             user.wallet += bet
             new_embed = discord.Embed(title='Blackjack - Win!', color=discord.Color.green())
@@ -328,8 +327,8 @@ async def blackjack(ctx, bet: str):
             new_embed.add_field(name=f'Total', value=f"```cs\n{player_value}```", inline=False)
             new_embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=False)
             new_embed.add_field(name=f'Total', value=f"```cs\n{bot_value}```", inline=False)
-            new_embed.add_field(name="Earnings",
-                value=f"```cs\n${bet} Gold```", inline=False)
+            new_embed.add_field(name="Result",
+                value=f"You Win! ^.^", inline=False)
             new_embed.add_field(name="Wallet",
                 value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
