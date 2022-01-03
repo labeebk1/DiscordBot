@@ -259,7 +259,7 @@ async def rps(ctx, bet: str, rps: str):
             win=True
 
         if draw:
-            user.wallet += bet
+            user.wallet -= bet
             embed = discord.Embed(title='Rock Paper Scissors', color=discord.Color.red())
             embed.add_field(name=f'{ctx.author.display_name}', value="Draw!", inline=False)
             embed.add_field(name="Your Move", value=f"```{rps}```", inline=True)
