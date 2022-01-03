@@ -259,7 +259,8 @@ async def rps(ctx, bet: str, rps: str):
             win=True
 
         if draw:
-            embed = discord.Embed(title='Rock Paper Scissors', color=discord.Color.blue())
+            user.wallet += bet
+            embed = discord.Embed(title='Rock Paper Scissors', color=discord.Color.red())
             embed.add_field(name=f'{ctx.author.display_name}', value="Draw!", inline=False)
             embed.add_field(name="Your Move", value=f"```{rps}```", inline=True)
             embed.add_field(name="Bot's Move", value=f"```{bot_move}```", inline=True)
@@ -268,7 +269,7 @@ async def rps(ctx, bet: str, rps: str):
             await ctx.send(embed=embed)
 
         elif win:
-            user.wallet += bet
+            user.wallet += 2*bet
             embed = discord.Embed(title='Rock Paper Scissors', color=discord.Color.green())
             embed.add_field(name=f'{ctx.author.display_name}', value="You Won ^.^! :thumbsup:", inline=False)
             embed.add_field(name="Your Move", value=f"```{rps}```", inline=True)
@@ -757,7 +758,6 @@ async def withdraw(ctx, amount):
 
         session.commit()
 
-
 @bot.command(name='leaderboard', aliases=["lb"], help='Leaderboards.')
 async def leaderboard(ctx, board_type: str):
 
@@ -779,7 +779,6 @@ async def leaderboard(ctx, board_type: str):
             for idx, user in enumerate(users):
                 embed.add_field(name=f"{idx+1}. {user.name}", value=f"```cs\nLevel {user.level:,d}```", inline=False)
         await ctx.send(embed=embed)
-
 
 @bot.command(name='cmd', help='Bot Commands.')
 async def commands(ctx):
