@@ -274,12 +274,12 @@ async def challenge(ctx, target_player, bet: str):
     
     else:
         embed = discord.Embed(title=f'Challenging {challenge_player.name}', color=discord.Color.random())
-        embed.add_field(name=f'{ctx.author.display_name} has challenged you to a duel.', value="Type 'yes' or 'y' to accept.", inline=False)
+        embed.add_field(name=f'{ctx.author.display_name} has challenged you to a duel for ${bet} Gold.', value="Type 'yes' or 'y' to accept.", inline=False)
         embed.set_thumbnail(url='https://cdn-icons-png.flaticon.com/512/1732/1732452.png')
         message = await ctx.send(embed=embed)
         reply = await bot.wait_for(event="message", check=author_check(challenge_player.name), timeout=30.0)
 
-        if reply in ['yes', 'y']:
+        if reply.content in ['yes', 'y']:
             
             user.wallet -= bet
             challenge_player.wallet -= bet
@@ -302,7 +302,6 @@ async def challenge(ctx, target_player, bet: str):
                 new_embed.set_thumbnail(url='https://cdn-icons-png.flaticon.com/512/1732/1732452.png')
 
                 await message.edit(embed=new_embed)
-
             elif challenge_player_roll > player_roll:
                 # Receipient won
                 # Player Won
@@ -317,7 +316,6 @@ async def challenge(ctx, target_player, bet: str):
                                 value=f"```cs\n${challenge_player.wallet:,d} Gold```", inline=False)
                 new_embed.set_thumbnail(url='https://cdn-icons-png.flaticon.com/512/1732/1732452.png')
                 await message.edit(embed=new_embed)
-
             else:
                 # Draw
                 user.wallet += bet
