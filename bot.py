@@ -517,7 +517,7 @@ async def buy(ctx, item=None):
                 await ctx.send(embed=embed)
 
         elif item == '3':
-            miner_upgrade_cost = 2 * 10 ** (user.level + 4)
+            miner_upgrade_cost = 2 * 10 ** (miner.level + 4)
             if user.wallet < miner_upgrade_cost:
                 await ctx.send('Insufficient Funds in wallet to level up Miner.')
             else:
