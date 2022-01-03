@@ -215,7 +215,7 @@ async def roulette(ctx, bet: str, color: str):
             user.wallet += 35*bet
             embed = discord.Embed(title='Roulette BIG WIN', color=discord.Color.green())
             embed.add_field(name=f'{ctx.author.display_name}', value="Holy shit You Won the major Prize!! ^.^! :thumbsup:", inline=False)
-            embed.add_field(name="Roulette Table", value=f"```cs\n{number} :green_circle:```", inline=True)
+            embed.add_field(name="Roulette Table", value=f"{number} :green_circle:", inline=True)
             embed.add_field(name="Earning",
                             value=f"```cs\n${35*bet:,d} Gold```", inline=False)
             embed.add_field(name="Wallet",
@@ -226,7 +226,7 @@ async def roulette(ctx, bet: str, color: str):
             user.wallet += bet
             embed = discord.Embed(title='Roulette Win!', color=discord.Color.green())
             embed.add_field(name=f'{ctx.author.display_name}', value="You win! :thumbsup:", inline=False)
-            embed.add_field(name="Roulette Table", value=f"```cs\n{number} {table_color}```", inline=True)
+            embed.add_field(name="Roulette Table", value=f"{number} {table_color}", inline=True)
             embed.add_field(name="Earning",
                             value=f"```cs\n${bet:,d} Gold```", inline=False)
             embed.add_field(name="Wallet",
@@ -236,7 +236,7 @@ async def roulette(ctx, bet: str, color: str):
             user.wallet -= bet
             embed = discord.Embed(title='Roulette Loss!', color=discord.Color.red())
             embed.add_field(name=f'{ctx.author.display_name}', value="RIP You Lost X_X! :thumbsdown:", inline=False)
-            embed.add_field(name="Roulette Table", value=f"```cs\n{number} {table_color}```", inline=True)
+            embed.add_field(name="Roulette Table", value=f"{number} {table_color}", inline=True)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             await ctx.send(embed=embed)
