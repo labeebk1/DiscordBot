@@ -357,6 +357,9 @@ async def blackjack(ctx, bet: str):
         if dealer_score <= 21 and player_score <= 21 and dealer_score == player_score:
             draw = True
 
+        if player_score > 21:
+            win = False
+
         if win:
             user.wallet += bet
             new_embed = discord.Embed(title='Blackjack - Win!', color=discord.Color.green())
