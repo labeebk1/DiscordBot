@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.expression import false
 
 from models import Hourly, Miner, Rob, Timestamp, User
 from card import Card
@@ -248,6 +249,7 @@ async def blackjack(ctx, bet: str):
 
         game_running = True
         win = False
+        bot_playing = False
 
         while game_running:
 
@@ -264,26 +266,72 @@ async def blackjack(ctx, bet: str):
 
                 if player_value > 21:
                     game_running = False
+                
+                if player_value == 21:
+                    game_running = False
+                    win = True
+                
+            if reply.content in ['stand', 's']:
+                game_running = False
+                bot_playing = True
             
             new_embed = discord.Embed(title='Blackjack', color=discord.Color.random())
             new_embed.add_field(name=f'Your Hand', value=f"{player_cards}", inline=True)
             new_embed.add_field(name=f'Total', value=f"```cs\n{player_value}```", inline=False)
             new_embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=False)
-            new_embed.add_field(name=f'Total', value=f"```cs\n{bot_value}```", inline=True)
+            new_embed.add_field(name=f'Total', value=f"```cs\n{bot_value}```", inline=False)
             new_embed.add_field(name=f'Your Move', value=f"hit (or h), stand (or s)", inline=False)
             new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
             await message.edit(embed=new_embed)
 
-        if not win:
-            new_embed = discord.Embed(title='Blackjack - Loss', color=discord.Color.red())
-            new_embed.add_field(name=f'Your Hand', value=f"{player_card}", inline=True)
+        while bot_playing:
+            next_card = Card()
+            bot_card = str(bot_card) + str(next_card)
+            bot_value += next_card.value
+
+            if bot_value > 17:
+                bot_playing = False
+                if bot_value < player_value:
+                    win = True
+            
+            elif bot_value > 21:
+                bot_playing = False
+                win = True
+
+            new_embed = discord.Embed(title="Blackjack - Bot's Turn", color=discord.Color.random())
+            new_embed.add_field(name=f'Your Hand', value=f"{player_cards}", inline=True)
             new_embed.add_field(name=f'Total', value=f"```cs\n{player_value}```", inline=False)
             new_embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=False)
-            new_embed.add_field(name=f'Total', value=f"```cs\n{bot_value}```", inline=True)
+            new_embed.add_field(name=f'Total', value=f"```cs\n{bot_value}```", inline=False)
+            new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
+            await message.edit(embed=new_embed)
+            asyncio.sleep(1)
+
+        if not win:
+            user.wallet -= bet
+            new_embed = discord.Embed(title='Blackjack - Loss', color=discord.Color.red())
+            new_embed.add_field(name=f'Your Hand', value=f"{player_cards}", inline=False)
+            new_embed.add_field(name=f'Total', value=f"```cs\n{player_value}```", inline=False)
+            new_embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=False)
+            new_embed.add_field(name=f'Total', value=f"```cs\n{bot_value}```", inline=False)
             new_embed.add_field(name="Earnings",
-                value=f"```cs\n$0 Gold```", inline=True)
+                value=f"```cs\n$0 Gold```", inline=False)
             new_embed.add_field(name="Wallet",
-                value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
+                value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+            new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
+            await message.edit(embed=new_embed)
+
+        else:
+            user.wallet += bet
+            new_embed = discord.Embed(title='Blackjack - Win!', color=discord.Color.green())
+            new_embed.add_field(name=f'Your Hand', value=f"{player_cards}", inline=False)
+            new_embed.add_field(name=f'Total', value=f"```cs\n{player_value}```", inline=False)
+            new_embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=False)
+            new_embed.add_field(name=f'Total', value=f"```cs\n{bot_value}```", inline=False)
+            new_embed.add_field(name="Earnings",
+                value=f"```cs\n${bet} Gold```", inline=False)
+            new_embed.add_field(name="Wallet",
+                value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
             await message.edit(embed=new_embed)
 
@@ -887,21 +935,21 @@ async def leaderboard(ctx, board_type: str):
         if board_type == 'wallet':
             users = session.query(User).order_by(User.wallet.desc()).limit(5).all()
             for idx, user in enumerate(users):
-                if idx == 1:
+                if idx == 0:
                     embed.add_field(name=f"{idx+1}. {user.name} :crown:", value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
                 else:
                     embed.add_field(name=f"{idx+1}. {user.name}", value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
         elif board_type == 'bank':
             users = session.query(User).order_by(User.bank.desc()).limit(5).all()
             for idx, user in enumerate(users):
-                if idx == 1:
+                if idx == 0:
                     embed.add_field(name=f"{idx+1}. {user.name} :crown:", value=f"```cs\n${user.bank:,d} Gold```", inline=False)
                 else:
                     embed.add_field(name=f"{idx+1}. {user.name}", value=f"```cs\n${user.bank:,d} Gold```", inline=False)
         elif board_type == 'level':
             users = session.query(User).order_by(User.level.desc()).limit(5).all()
             for idx, user in enumerate(users):
-                if idx == 1:
+                if idx == 0:
                     embed.add_field(name=f"{idx+1}. {user.name} :crown:", value=f"```cs\nLevel {user.level:,d}```", inline=False)
                 else:
                     embed.add_field(name=f"{idx+1}. {user.name}", value=f"```cs\nLevel {user.level:,d}```", inline=False)
