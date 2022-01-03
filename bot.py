@@ -223,7 +223,7 @@ async def roulette(ctx, bet: str, color: str):
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             embed.set_thumbnail(url='https://previews.123rf.com/images/hobbitfoot/hobbitfoot1709/hobbitfoot170900484/85929770-big-win-roulette-signboard-game-banner-design-.jpg')
             await ctx.send(embed=embed)
-        if win:
+        elif win:
             user.wallet += bet
             embed = discord.Embed(title='Roulette Win!', color=discord.Color.green())
             embed.add_field(name=f'{ctx.author.display_name}', value="You win! :thumbsup:", inline=False)
