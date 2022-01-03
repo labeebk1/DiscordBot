@@ -1,4 +1,5 @@
 # bot.py
+import asyncio
 import os
 import random
 import datetime
@@ -235,15 +236,20 @@ async def blackjack(ctx, bet: str):
         bot_card = Card()
 
         embed.add_field(name=f'Your Hand', value=f"{player_card}", inline=True)
-        embed.add_field(name=f'Total', value=f"```cs\n{player_card.value}```", inline=True)
-        embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=True)
+        embed.add_field(name=f'Total', value=f"```cs\n{player_card.value}```", inline=False)
+        embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=False)
         embed.add_field(name=f'Total', value=f"```cs\n{bot_card.value}```", inline=True)
         embed.add_field(name=f'Your Move', value=f"Hit, Stand", inline=False)
         embed.set_thumbnail(url='https://cdn.iconscout.com/icon/premium/png-256-thumb/blackjack-2585915-2157681.png')
         
         message = await ctx.send(embed=embed)
-        reply = await ctx.wait_for("message", check=author_check(ctx.author), timeout=30.0)
-        print(reply.content)
+        try:
+            reply = await bot.wait_for(event="message", check=author_check(ctx.author), timeout=30.0)
+            message = await ctx.send("Good reply")
+            print(reply.content)
+        except asyncio.TimeoutError: 
+            pass
+
 
     session.commit()
 
