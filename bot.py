@@ -272,7 +272,7 @@ async def blackjack(ctx, bet: str):
 
         if not game and win:
             # blackjack off the bat
-            user.wallet += bet
+            user.wallet += int(2.5*bet)
             new_embed = discord.Embed(title='Blackjack - Win!', color=discord.Color.green())
             new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=False)
             new_embed.add_field(name=f'Total', value=f"```cs\n{player_score}```", inline=False)
@@ -280,6 +280,8 @@ async def blackjack(ctx, bet: str):
             new_embed.add_field(name=f'Total', value=f"```cs\n{dealer_score}```", inline=False)
             new_embed.add_field(name="Result",
                 value=f"BLACKJACK! ^.^", inline=False)
+            new_embed.add_field(name="Earnings",
+                value=f"```cs\n${int(2.5*bet):,d} Gold```", inline=False)
             new_embed.add_field(name="Wallet",
                 value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
@@ -351,6 +353,10 @@ async def blackjack(ctx, bet: str):
         if dealer_score > 21 or dealer_score < player_score:
             win = True
 
+        draw = False
+        if dealer_score <= 21 and player_score <= 21 and dealer_score == player_score:
+            draw = True
+
         if win:
             user.wallet += bet
             new_embed = discord.Embed(title='Blackjack - Win!', color=discord.Color.green())
@@ -364,7 +370,8 @@ async def blackjack(ctx, bet: str):
                 value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
             await message.edit(embed=new_embed)
-        else:
+
+        elif not win and not draw:
             user.wallet -= bet
             new_embed = discord.Embed(title='Blackjack - Loss', color=discord.Color.red())
             new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=False)
@@ -375,6 +382,17 @@ async def blackjack(ctx, bet: str):
                 value=f"You lose! X_X", inline=False)
             new_embed.add_field(name="Wallet",
                 value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+            new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
+            await message.edit(embed=new_embed)
+            
+        else:
+            new_embed = discord.Embed(title='Blackjack - Draw', color=discord.Color.red())
+            new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=False)
+            new_embed.add_field(name=f'Total', value=f"```cs\n{player_score}```", inline=False)
+            new_embed.add_field(name=f"Bot's Hand", value=f"{dealer_cards_display}", inline=False)
+            new_embed.add_field(name=f'Total', value=f"```cs\n{dealer_score}```", inline=False)
+            new_embed.add_field(name="Result",
+                value=f"Draw Game!", inline=False)
             new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
             await message.edit(embed=new_embed)
 
