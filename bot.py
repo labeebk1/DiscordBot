@@ -268,7 +268,7 @@ async def blackjack(ctx, bet: str):
             embed.add_field(name=f'Total', value=f"```cs\n{dealer_score}```", inline=True)
             embed.add_field(name=f'Your Move', value=f"hit (or h), stand (or s)", inline=False)
             embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
-            embed.set_footer(text=f"Player: {user.name}", icon_url = "https://cdn4.iconfinder.com/data/icons/symbols-vol-1-1/40/user-person-single-id-account-player-male-female-512.png")
+            embed.set_footer(text=f"Player: {user.name}", icon_url = "https://img1.pnghut.com/25/25/24/CYFkxxn25j/human-icon-avatar-person-white-profile.jpg")
             message = await ctx.send(embed=embed)
 
         if not game and win:
@@ -286,7 +286,7 @@ async def blackjack(ctx, bet: str):
             new_embed.add_field(name="Wallet",
                 value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
-            embed.set_footer(text=f"Player: {user.name}", icon_url = "https://cdn4.iconfinder.com/data/icons/symbols-vol-1-1/40/user-person-single-id-account-player-male-female-512.png")
+            new_embed.set_footer(text=f"Player: {user.name}", icon_url = "https://img1.pnghut.com/25/25/24/CYFkxxn25j/human-icon-avatar-person-white-profile.jpg")
             await ctx.send(embed=new_embed)
             return
 
@@ -324,7 +324,7 @@ async def blackjack(ctx, bet: str):
             new_embed.add_field(name=f'Total', value=f"```cs\n{dealer_score}```", inline=False)
             new_embed.add_field(name=f'Your Move', value=f"hit (or h), stand (or s)", inline=False)
             new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
-            embed.set_footer(text=f"Player: {user.name}", icon_url = "https://cdn4.iconfinder.com/data/icons/symbols-vol-1-1/40/user-person-single-id-account-player-male-female-512.png")
+            new_embed.set_footer(text=f"Player: {user.name}", icon_url = "https://img1.pnghut.com/25/25/24/CYFkxxn25j/human-icon-avatar-person-white-profile.jpg")
             await message.edit(embed=new_embed)
 
         while dealer_score < 17 and player_score <= 21:
@@ -350,7 +350,7 @@ async def blackjack(ctx, bet: str):
             new_embed.add_field(name=f"Bot's Hand", value=f"{dealer_cards_display}", inline=False)
             new_embed.add_field(name=f'Total', value=f"```cs\n{dealer_score}```", inline=False)
             new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
-            embed.set_footer(text=f"Player: {user.name}", icon_url = "https://cdn4.iconfinder.com/data/icons/symbols-vol-1-1/40/user-person-single-id-account-player-male-female-512.png")
+            new_embed.set_footer(text=f"Player: {user.name}", icon_url = "https://img1.pnghut.com/25/25/24/CYFkxxn25j/human-icon-avatar-person-white-profile.jpg")
             await message.edit(embed=new_embed)
             await asyncio.sleep(1)
 
@@ -376,7 +376,7 @@ async def blackjack(ctx, bet: str):
             new_embed.add_field(name="Wallet",
                 value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
-            embed.set_footer(text=f"Player: {user.name}", icon_url = "https://cdn4.iconfinder.com/data/icons/symbols-vol-1-1/40/user-person-single-id-account-player-male-female-512.png")
+            new_embed.set_footer(text=f"Player: {user.name}", icon_url = "https://img1.pnghut.com/25/25/24/CYFkxxn25j/human-icon-avatar-person-white-profile.jpg")
             await message.edit(embed=new_embed)
 
         elif not win and not draw:
@@ -391,7 +391,7 @@ async def blackjack(ctx, bet: str):
             new_embed.add_field(name="Wallet",
                 value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
-            embed.set_footer(text=f"Player: {user.name}", icon_url = "https://cdn4.iconfinder.com/data/icons/symbols-vol-1-1/40/user-person-single-id-account-player-male-female-512.png")
+            new_embed.set_footer(text=f"Player: {user.name}", icon_url = "https://img1.pnghut.com/25/25/24/CYFkxxn25j/human-icon-avatar-person-white-profile.jpg")
             await message.edit(embed=new_embed)
 
         else:
@@ -403,9 +403,8 @@ async def blackjack(ctx, bet: str):
             new_embed.add_field(name="Result",
                 value=f"Draw Game!", inline=False)
             new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
-            embed.set_footer(text=f"Player: {user.name}", icon_url = "https://cdn4.iconfinder.com/data/icons/symbols-vol-1-1/40/user-person-single-id-account-player-male-female-512.png")
+            new_embed.set_footer(text=f"Player: {user.name}", icon_url = "https://img1.pnghut.com/25/25/24/CYFkxxn25j/human-icon-avatar-person-white-profile.jpg")
             await message.edit(embed=new_embed)
-
 
     session.commit()
 
