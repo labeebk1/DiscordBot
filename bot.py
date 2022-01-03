@@ -230,6 +230,9 @@ async def blackjack(ctx, bet: str):
     if bet > user.wallet:
         await ctx.send('Insufficient Funds.')
     else:
+
+        user.wallet -= bet
+        session.commit()
         
         embed = discord.Embed(title='Blackjack', color=discord.Color.random())
 
@@ -365,7 +368,7 @@ async def blackjack(ctx, bet: str):
             win = False
 
         if win:
-            user.wallet += bet
+            user.wallet += 2*bet
             new_embed = discord.Embed(title='Blackjack - Win!', color=discord.Color.green())
             new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=False)
             new_embed.add_field(name=f'Total', value=f"```cs\n{player_score}```", inline=False)
@@ -380,7 +383,6 @@ async def blackjack(ctx, bet: str):
             await message.edit(embed=new_embed)
 
         elif not win and not draw:
-            user.wallet -= bet
             new_embed = discord.Embed(title='Blackjack - Loss', color=discord.Color.red())
             new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=False)
             new_embed.add_field(name=f'Total', value=f"```cs\n{player_score}```", inline=False)
