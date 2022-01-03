@@ -464,7 +464,7 @@ async def blackjack(ctx, bet: str):
         while player_score < 21 and game:
             reply = await bot.wait_for(event="message", check=author_check(ctx.author), timeout=30.0)
             
-            while reply.content not in ['hit', 'stand', 'h', 's']:
+            while reply.content not in ['hit', 'stand', 'h', 's', "Hit", "H", "Stand", "S"]:
                 await ctx.send("Invalid Command for Blackjack. Please use keywords 'hit', 'stand', 'h', or 's'")
                 reply = await bot.wait_for(event="message", check=author_check(ctx.author), timeout=30.0)
             
