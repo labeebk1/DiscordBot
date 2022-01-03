@@ -773,6 +773,39 @@ async def give(ctx, tagged_user, amount):
 
     session.commit()
 
+
+@bot.command(name='take', help='Take money from a player (admin only command).')
+async def take(ctx, tagged_user, amount):
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+    
+    amount = validate_bet(amount)
+
+    if not amount:
+        await ctx.send('Invalid amount to send.')
+    
+    members = ctx.message.mentions
+    if members:
+        member_name = members[0].name
+
+    if not members:
+        await ctx.send('You must tag someone to send money to them.')
+
+    recipient = session.query(User).filter_by(name=member_name).first()
+
+    if not recipient:
+        await ctx.send('User does not exist. They must create an account by typing !bal')
+    
+    if user.name == 'Koltzan':
+        recipient.wallet -= amount
+        embed = discord.Embed(title=f"Money Taken!", color=discord.Color.green())
+        embed.add_field(name=f"{recipient.name}'s' Wallet",
+                        value=f"```cs\n${recipient.wallet:,d} Gold```", inline=True)
+        embed.add_field(name=f"Your Wallet",
+                        value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
+        await ctx.send(embed=embed)
+
+    session.commit()
+
 @bot.command(name='setlevel', help='Admin command only.')
 async def give(ctx, tagged_user, amount):
     user = session.query(User).filter_by(name=ctx.author.name).first()
