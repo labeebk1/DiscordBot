@@ -183,13 +183,13 @@ async def roulette(ctx, bet: str, color: str):
         return
     
     if color == ['g', 'green']:
-        color = 'green_circle'
+        color = ':green_circle:'
     
     if color in ['r', 'red']:
-        color = 'red_circle'
+        color = ':red_circle:'
 
     if color == ['b', 'black']:
-        color = 'black_circle'
+        color = ':black_circle:'
 
     if bet > user.wallet:
         await ctx.send('Insufficient Funds.')
@@ -206,7 +206,7 @@ async def roulette(ctx, bet: str, color: str):
         else:
             table_color = ':red_circle:'
 
-        if table_color == color and table_color == ':green_circle':
+        if table_color == color and table_color == ':green_circle:':
             big_win = True
         elif table_color == color:
             win = True
