@@ -254,8 +254,8 @@ async def blackjack(ctx, bet: str):
                 dealer_cards.append(dealer_card)
                 dealer_score += dealer_card.card_value
 
-            player_cards_display = ' '.join([card.card + card.suit for card in player_cards])
-            dealer_cards_display = ' '.join([card.card + card.suit for card in dealer_cards])
+            player_cards_display = ' '.join([card.card + card.suits_value for card in player_cards])
+            dealer_cards_display = ' '.join([card.card + card.suits_value for card in dealer_cards])
             
             if player_score == 21:
                 game = False
@@ -312,7 +312,7 @@ async def blackjack(ctx, bet: str):
             if reply.content in ['stand', 's']:
                 game = False
             
-            player_cards_display = ' '.join([card.card + card.suit for card in player_cards])
+            player_cards_display = ' '.join([card.card + card.suits_value for card in player_cards])
             new_embed = discord.Embed(title='Blackjack', color=discord.Color.random())
             new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=True)
             new_embed.add_field(name=f'Total', value=f"```cs\n{player_score}```", inline=False)
@@ -322,7 +322,7 @@ async def blackjack(ctx, bet: str):
             new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
             await message.edit(embed=new_embed)
 
-        while dealer_score < 17:
+        while dealer_score < 17 and player_score <= 21:
 
             dealer_card = Card()
             dealer_cards.append(dealer_card)
@@ -338,7 +338,7 @@ async def blackjack(ctx, bet: str):
                 else:
                     c += 1
 
-            dealer_cards_display = ' '.join([card.card + card.suit for card in dealer_cards])
+            dealer_cards_display = ' '.join([card.card + card.suits_value for card in dealer_cards])
             new_embed = discord.Embed(title="Blackjack - Bot's Turn", color=discord.Color.random())
             new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=True)
             new_embed.add_field(name=f'Total', value=f"```cs\n{player_score}```", inline=False)
