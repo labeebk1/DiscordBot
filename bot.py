@@ -164,7 +164,7 @@ async def dice(ctx, bet: str, dice_bet: str):
 
     session.commit()
 
-@bot.command(name='roulette', aliases=["r"], help='Roulette the bot.')
+@bot.command(name='roulette', help='Roulette the bot.')
 async def roulette(ctx, bet: str, color: str):
     # Query if User exists
     user = session.query(User).filter_by(name=ctx.author.name).first()
