@@ -164,6 +164,85 @@ async def dice(ctx, bet: str, dice_bet: str):
 
     session.commit()
 
+@bot.command(name='roulette', aliases=["r"], help='Roulette the bot.')
+async def roulette(ctx, bet: str, color: str):
+    # Query if User exists
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+
+    if not user:
+        user = create_user(ctx.author.name)
+
+    bet = validate_bet(bet)
+
+    if not bet:
+        await ctx.send("Invalid bet. Format's Available: 1, 1k, 1K, 1m, 1M")
+        return
+
+    if not color in ['red', 'r', 'green', 'g', 'black' ,'b']:
+        await ctx.send("Invalid color selection. Please choose between red, r, green, g, black, b")
+        return
+    
+    if color == ['g', 'green']:
+        color = 'green_circle'
+    
+    if color in ['r', 'red']:
+        color = 'red_circle'
+
+    if color == ['b', 'black']:
+        color = 'black_circle'
+
+    if bet > user.wallet:
+        await ctx.send('Insufficient Funds.')
+    else:
+        
+        number = random.randint(0,36)
+        big_win = False
+        win = False
+        table_color = ''
+        if number == 0:
+            table_color = ':green_circle:'
+        elif number % 2 == 0:
+            table_color = ':black_circle:'
+        else:
+            table_color = ':red_circle:'
+
+        if table_color == color and table_color == ':green_circle':
+            big_win = True
+        elif table_color == color:
+            win = True
+
+        if big_win:
+            user.wallet += 35*bet
+            embed = discord.Embed(title='Roulette BIG WIN', color=discord.Color.green())
+            embed.add_field(name=f'{ctx.author.display_name}', value="Holy shit You Won the major Prize!! ^.^! :thumbsup:", inline=False)
+            embed.add_field(name="Roulette Table", value=f"```cs\n{number} :green_circle:```", inline=True)
+            embed.add_field(name="Earning",
+                            value=f"```cs\n${35*bet:,d} Gold```", inline=False)
+            embed.add_field(name="Wallet",
+                            value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+            embed.set_thumbnail(url='https://previews.123rf.com/images/hobbitfoot/hobbitfoot1709/hobbitfoot170900484/85929770-big-win-roulette-signboard-game-banner-design-.jpg')
+            await ctx.send(embed=embed)
+        if win:
+            user.wallet += bet
+            embed = discord.Embed(title='Roulette Win!', color=discord.Color.green())
+            embed.add_field(name=f'{ctx.author.display_name}', value="You win! :thumbsup:", inline=False)
+            embed.add_field(name="Roulette Table", value=f"```cs\n{number} {table_color}```", inline=True)
+            embed.add_field(name="Earning",
+                            value=f"```cs\n${bet:,d} Gold```", inline=False)
+            embed.add_field(name="Wallet",
+                            value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+            await ctx.send(embed=embed)
+        else:
+            user.wallet -= bet
+            embed = discord.Embed(title='Roulette Loss!', color=discord.Color.red())
+            embed.add_field(name=f'{ctx.author.display_name}', value="RIP You Lost X_X! :thumbsdown:", inline=False)
+            embed.add_field(name="Roulette Table", value=f"```cs\n{number} {table_color}```", inline=True)
+            embed.add_field(name="Wallet",
+                            value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+            await ctx.send(embed=embed)
+
+    session.commit()
+
 @bot.command(name='roll', aliases=["r"], help='Roll against the bot.')
 async def roll(ctx, bet: str):
     # Query if User exists
@@ -781,7 +860,6 @@ async def give(ctx, tagged_user, amount):
 
     session.commit()
 
-
 @bot.command(name='take', help='Take money from a player (admin only command).')
 async def take(ctx, tagged_user, amount):
     user = session.query(User).filter_by(name=ctx.author.name).first()
@@ -1069,6 +1147,7 @@ async def commands(ctx):
     embed.add_field(name="dice", value="Play Dice. Format: .dice Amount 1-6", inline=False)
     embed.add_field(name="roll", value="Roll against the bot (1 to 100)", inline=False)
     embed.add_field(name="blackjack", value="Play Blackjack!", inline=False)
+    embed.add_field(name="roulette", value="Play Roulette!", inline=False)
     embed.add_field(name="give", value="Give money to a player. Format: .give @Player Amount.", inline=False)
     embed.add_field(name="rob", value="Rob the shit out of a player. Format: .rob @Player", inline=False)
     embed.add_field(name="work", value="Work for some money. Level up to get more money.", inline=False)
