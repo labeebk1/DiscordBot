@@ -384,7 +384,7 @@ async def blackjack(ctx, bet: str):
                 value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
             await message.edit(embed=new_embed)
-            
+
         else:
             new_embed = discord.Embed(title='Blackjack - Draw', color=discord.Color.red())
             new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=False)
@@ -1017,7 +1017,7 @@ async def leaderboard(ctx, board_type: str):
                     embed.add_field(name=f"{idx+1}. {user.name}", value=f"```cs\nLevel {user.level:,d}```", inline=False)
         await ctx.send(embed=embed)
 
-@bot.command(name='cmd', help='Bot Commands.')
+@bot.command(name='cmd', aliases=["commands"], help='Bot Commands.')
 async def commands(ctx):
     embed = discord.Embed(title=f"Bot Commands", color=discord.Color.green())
     embed.add_field(name="bal", value="Check your balance or create your account.", inline=False)
@@ -1026,6 +1026,7 @@ async def commands(ctx):
     embed.add_field(name="rps", value="Play Rock Paper Scissors. Format: .rps Amount r/p/s", inline=False)
     embed.add_field(name="dice", value="Play Dice. Format: .dice Amount 1-6", inline=False)
     embed.add_field(name="roll", value="Roll against the bot (1 to 100)", inline=False)
+    embed.add_field(name="blackjack", value="Play Blackjack!", inline=False)
     embed.add_field(name="give", value="Give money to a player. Format: .give @Player Amount.", inline=False)
     embed.add_field(name="rob", value="Rob the shit out of a player. Format: .rob @Player", inline=False)
     embed.add_field(name="work", value="Work for some money. Level up to get more money.", inline=False)
