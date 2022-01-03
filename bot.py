@@ -231,11 +231,12 @@ async def blackjack(ctx, bet: str):
         player_card = Card()
         bot_card = Card()
 
-        embed.add_field(name=f'Your Hand', value=f"{player_card}", inline=True)
-        embed.add_field(name=f'Total', value=f"```cs\n{player_card.value}```", inline=False)
-        embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=True)
-        embed.add_field(name=f'Total', value=f"```cs\n{bot_card.value}```", inline=False)
-        embed.set_thumbnail(url='https://cdn1.iconfinder.com/data/icons/sin-city-memories/128/poker-512.png')
+        embed.add_field(name=f'Your Hand', value=f"{player_card}", inline=False)
+        embed.add_field(name=f'Total', value=f"```cs\n{player_card.value}```", inline=True)
+        embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=False)
+        embed.add_field(name=f'Total', value=f"```cs\n{bot_card.value}```", inline=True)
+        embed.add_field(name=f'Your Move', value=f"Hit, Stand", inline=False)
+        embed.set_thumbnail(url='https://cdn.iconscout.com/icon/premium/png-256-thumb/blackjack-3752994-3154690.png')
         await ctx.send(embed=embed)
 
 

@@ -23,4 +23,4 @@ class Card:
         self.value = card_map[self.card]
         
     def __repr__(self):
-        return ' '.join([self.suit, self.card])
+        return ' '.join([self.card, self.suit])
