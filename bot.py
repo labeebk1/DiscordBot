@@ -235,23 +235,58 @@ async def blackjack(ctx, bet: str):
         player_card = Card()
         bot_card = Card()
 
-        embed.add_field(name=f'Your Hand', value=f"{player_card}", inline=True)
-        embed.add_field(name=f'Total', value=f"```cs\n{player_card.value}```", inline=False)
-        embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=False)
-        embed.add_field(name=f'Total', value=f"```cs\n{bot_card.value}```", inline=True)
-        embed.add_field(name=f'Your Move', value=f"Hit, Stand", inline=False)
-        embed.set_thumbnail(url='https://cdn.iconscout.com/icon/premium/png-256-thumb/blackjack-2585915-2157681.png')
-        
-        message = await ctx.send(embed=embed)
-        try:
-            reply = await bot.wait_for(event="message", check=author_check(ctx.author), timeout=30.0)
-            message = await ctx.send("Good reply")
-            print(reply.content)
-        except asyncio.TimeoutError: 
-            pass
+        player_value = player_card.value
+        bot_value = bot_card.value
 
+        embed.add_field(name=f'Your Hand', value=f"{player_card}", inline=True)
+        embed.add_field(name=f'Total', value=f"```cs\n{player_value}```", inline=False)
+        embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=False)
+        embed.add_field(name=f'Total', value=f"```cs\n{bot_value}```", inline=True)
+        embed.add_field(name=f'Your Move', value=f"hit (or h), stand (or s)", inline=False)
+        embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
+        message = await ctx.send(embed=embed)
+
+        game_running = True
+        win = False
+
+        while game_running:
+
+            reply = await bot.wait_for(event="message", check=author_check(ctx.author), timeout=30.0)
+            
+            while reply not in ['hit', 'stand', 'h', 's']:
+                await ctx.send("Invalid Command for Blackjack. Please use keywords 'hit', 'stand', 'h', or 's'")
+                reply = await bot.wait_for(event="message", check=author_check(ctx.author), timeout=30.0)
+            
+            if reply in ['hit', 'h']:
+                next_card = Card()
+                player_cards = str(player_card) + (next_card)
+                player_value += next_card.value
+
+                if player_value > 21:
+                    game_running = False
+            
+            new_embed = discord.Embed(title='Blackjack', color=discord.Color.random())
+            new_embed.add_field(name=f'Your Hand', value=f"{player_card}", inline=True)
+            new_embed.add_field(name=f'Total', value=f"```cs\n{player_value}```", inline=False)
+            new_embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=False)
+            new_embed.add_field(name=f'Total', value=f"```cs\n{bot_value}```", inline=True)
+            new_embed.add_field(name=f'Your Move', value=f"hit (or h), stand (or s)", inline=False)
+            new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
+            await message.edit(embed=new_embed)
+
+        if not win:
+            new_embed = discord.Embed(title='Blackjack - Loss', color=discord.Color.red())
+            new_embed.add_field(name=f'Your Hand', value=f"{player_card}", inline=True)
+            new_embed.add_field(name=f'Total', value=f"```cs\n{player_value}```", inline=False)
+            new_embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=False)
+            new_embed.add_field(name=f'Total', value=f"```cs\n{bot_value}```", inline=True)
+            new_embed.add_field(name="Wallet",
+                value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
+            new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
+            await message.edit(embed=new_embed)
 
     session.commit()
+
 
 
 @bot.command(name='rps', help='Do a Rock Paper Scissors match.')
