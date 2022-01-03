@@ -244,6 +244,96 @@ async def roulette(ctx, bet: str, color: str):
 
     session.commit()
 
+
+@bot.command(name='challenge', help='Challenge a player to a roll.')
+async def challenge(ctx, target_player, bet: str):
+    # Query if User exists
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+
+    members = ctx.message.mentions
+    if members:
+        member = members[0]
+        member_name = members[0].name
+
+    challenge_player = session.query(User).filter_by(name=member_name).first()
+
+    if not user or not challenge_player:
+        await ctx.send("User does not exist.")
+
+    bet = validate_bet(bet)
+
+    if not bet:
+        await ctx.send("Invalid bet. Format's Available: 1, 1k, 1K, 1m, 1M")
+        return
+
+    if user.wallet < bet:
+        await ctx.send("Insufficient funds to make this challenge.")
+
+    elif challenge_player.wallet < bet:
+        await ctx.send(f"{challenge_player.name} is broke af.")
+    
+    else:
+        embed = discord.Embed(title=f'Challenging {challenge_player.name}', color=discord.Color.random())
+        embed.add_field(name=f'{ctx.author.display_name} has challenged you to a duel.', value="Type 'yes' or 'y' to accept.", inline=False)
+        embed.set_thumbnail(url='https://cdn-icons-png.flaticon.com/512/1732/1732452.png')
+        message = await ctx.send(embed=embed)
+        reply = await bot.wait_for(event="message", check=author_check(challenge_player.name), timeout=30.0)
+
+        if reply in ['yes', 'y']:
+            
+            user.wallet -= bet
+            challenge_player.wallet -= bet
+            session.commit()
+
+            player_roll = random.randint(1,100)
+            challenge_player_roll = random.randint(1,100)
+
+            if player_roll > challenge_player_roll:
+                # Player Won
+                user.wallet += 2*bet
+                new_embed = discord.Embed(title='Challenge Roll', color=discord.Color.random())
+                new_embed.add_field(name=f'{user.name} Won!', value=f"Sit {challenge_player.name}", inline=False)
+                new_embed.add_field(name=f"{user.name} Roll", value=f"```{player_roll}```", inline=True)
+                new_embed.add_field(name=f"{challenge_player.name} Roll", value=f"```{challenge_player_roll}```", inline=True)
+                new_embed.add_field(name=f"{user.name} Wallet",
+                                value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+                new_embed.add_field(name=f"{challenge_player.name} Wallet",
+                                value=f"```cs\n${challenge_player.wallet:,d} Gold```", inline=False)
+                new_embed.set_thumbnail(url='https://cdn-icons-png.flaticon.com/512/1732/1732452.png')
+
+                await message.edit(embed=new_embed)
+
+            elif challenge_player_roll > player_roll:
+                # Receipient won
+                # Player Won
+                challenge_player.wallet += 2*bet
+                new_embed = discord.Embed(title='Challenge Roll', color=discord.Color.random())
+                new_embed.add_field(name=f'{challenge_player.name} Won!', value=f"Sit {user.name}", inline=False)
+                new_embed.add_field(name=f"{user.name} Roll", value=f"```{player_roll}```", inline=True)
+                new_embed.add_field(name=f"{challenge_player.name} Roll", value=f"```{challenge_player_roll}```", inline=True)
+                new_embed.add_field(name=f"{user.name} Wallet",
+                                value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+                new_embed.add_field(name=f"{challenge_player.name} Wallet",
+                                value=f"```cs\n${challenge_player.wallet:,d} Gold```", inline=False)
+                new_embed.set_thumbnail(url='https://cdn-icons-png.flaticon.com/512/1732/1732452.png')
+                await message.edit(embed=new_embed)
+
+            else:
+                # Draw
+                user.wallet += bet
+                challenge_player.wallet += bet
+                new_embed = discord.Embed(title='Challenge Roll', color=discord.Color.random())
+                new_embed.add_field(name='Draw!', value=f"Rematch?", inline=False)
+                new_embed.add_field(name=f"{user.name} Roll", value=f"```{player_roll}```", inline=True)
+                new_embed.add_field(name=f"{challenge_player.name} Roll", value=f"```{challenge_player_roll}```", inline=True)
+                new_embed.set_thumbnail(url='https://cdn-icons-png.flaticon.com/512/1732/1732452.png')
+                await message.edit(embed=new_embed)
+
+        else:
+            await ctx.send(f"No response by {challenge_player.name}")
+
+    session.commit()
+
 @bot.command(name='roll', aliases=["r"], help='Roll against the bot.')
 async def roll(ctx, bet: str):
     # Query if User exists
@@ -1152,6 +1242,7 @@ async def commands(ctx):
     embed.add_field(name="roulette", value="Play Roulette!", inline=False)
     embed.add_field(name="give", value="Give money to a player. Format: .give @Player Amount.", inline=False)
     embed.add_field(name="rob", value="Rob the shit out of a player. Format: .rob @Player", inline=False)
+    embed.add_field(name="challenge", value="Challenge a player to a roll. Format: .challenge @Player Amount", inline=False)
     embed.add_field(name="work", value="Work for some money. Level up to get more money.", inline=False)
     embed.add_field(name="hourly", value="Make $5000 every hour.", inline=False)
     embed.add_field(name="miner", value="Check the status of your miner.", inline=False)
