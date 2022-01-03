@@ -277,8 +277,9 @@ async def challenge(ctx, target_player, bet: str):
         embed.add_field(name=f'{ctx.author.display_name} has challenged you to a duel for ${bet} Gold.', value="Type 'yes' or 'y' to accept.", inline=False)
         embed.set_thumbnail(url='https://cdn-icons-png.flaticon.com/512/1732/1732452.png')
         message = await ctx.send(embed=embed)
-        reply = await bot.wait_for(event="message", check=author_check(challenge_player.name), timeout=30.0)
 
+        reply = await bot.wait_for(event="message", check=author_check(member), timeout=30.0)
+        
         if reply.content in ['yes', 'y']:
             
             user.wallet -= bet
@@ -292,9 +293,9 @@ async def challenge(ctx, target_player, bet: str):
                 # Player Won
                 user.wallet += 2*bet
                 new_embed = discord.Embed(title='Challenge Roll', color=discord.Color.random())
-                new_embed.add_field(name=f'{user.name} Won!', value=f"Sit {challenge_player.name}", inline=False)
-                new_embed.add_field(name=f"{user.name} Roll", value=f"```{player_roll}```", inline=True)
-                new_embed.add_field(name=f"{challenge_player.name} Roll", value=f"```{challenge_player_roll}```", inline=True)
+                new_embed.add_field(name=f'{user.name} Won!', value=f"Sit {challenge_player.name} :point_down:", inline=False)
+                new_embed.add_field(name=f"{user.name} :crown:", value=f"```{player_roll}```", inline=True)
+                new_embed.add_field(name=f"{challenge_player.name}", value=f"```{challenge_player_roll}```", inline=True)
                 new_embed.add_field(name=f"{user.name} Wallet",
                                 value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
                 new_embed.add_field(name=f"{challenge_player.name} Wallet",
@@ -304,12 +305,11 @@ async def challenge(ctx, target_player, bet: str):
                 await message.edit(embed=new_embed)
             elif challenge_player_roll > player_roll:
                 # Receipient won
-                # Player Won
                 challenge_player.wallet += 2*bet
                 new_embed = discord.Embed(title='Challenge Roll', color=discord.Color.random())
-                new_embed.add_field(name=f'{challenge_player.name} Won!', value=f"Sit {user.name}", inline=False)
-                new_embed.add_field(name=f"{user.name} Roll", value=f"```{player_roll}```", inline=True)
-                new_embed.add_field(name=f"{challenge_player.name} Roll", value=f"```{challenge_player_roll}```", inline=True)
+                new_embed.add_field(name=f'{challenge_player.name} Won!', value=f"Sit {user.name} :point_down:", inline=False)
+                new_embed.add_field(name=f"{user.name}", value=f"```{player_roll}```", inline=True)
+                new_embed.add_field(name=f"{challenge_player.name} :crown:", value=f"```{challenge_player_roll}```", inline=True)
                 new_embed.add_field(name=f"{user.name} Wallet",
                                 value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
                 new_embed.add_field(name=f"{challenge_player.name} Wallet",
