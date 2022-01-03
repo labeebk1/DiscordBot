@@ -259,14 +259,14 @@ async def blackjack(ctx, bet: str):
             
             if reply.content in ['hit', 'h']:
                 next_card = Card()
-                player_cards = str(player_card) + (next_card)
+                player_cards = str(player_card) + str(next_card)
                 player_value += next_card.value
 
                 if player_value > 21:
                     game_running = False
             
             new_embed = discord.Embed(title='Blackjack', color=discord.Color.random())
-            new_embed.add_field(name=f'Your Hand', value=f"{player_card}", inline=True)
+            new_embed.add_field(name=f'Your Hand', value=f"{player_cards}", inline=True)
             new_embed.add_field(name=f'Total', value=f"```cs\n{player_value}```", inline=False)
             new_embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=False)
             new_embed.add_field(name=f'Total', value=f"```cs\n{bot_value}```", inline=True)
@@ -280,6 +280,8 @@ async def blackjack(ctx, bet: str):
             new_embed.add_field(name=f'Total', value=f"```cs\n{player_value}```", inline=False)
             new_embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=False)
             new_embed.add_field(name=f'Total', value=f"```cs\n{bot_value}```", inline=True)
+            new_embed.add_field(name="Earnings",
+                value=f"```cs\n$0 Gold```", inline=True)
             new_embed.add_field(name="Wallet",
                 value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
             new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
