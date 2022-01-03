@@ -208,7 +208,7 @@ async def roll(ctx, bet: str):
 
 
 @bot.command(name='blackjack', aliases=["bj"], help='Roll against the bot.')
-async def roll(ctx, bet: str):
+async def blackjack(ctx, bet: str):
     # Query if User exists
     user = session.query(User).filter_by(name=ctx.author.name).first()
 
