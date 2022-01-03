@@ -206,6 +206,43 @@ async def roll(ctx, bet: str):
 
     session.commit()
 
+
+@bot.command(name='blackjack', aliases=["bj"], help='Roll against the bot.')
+async def roll(ctx, bet: str):
+    # Query if User exists
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+
+    if not user:
+        user = create_user(ctx.author.name)
+
+    bet = validate_bet(bet)
+
+    if not bet:
+        await ctx.send("Invalid bet. Format's Available: 1, 1k, 1K, 1m, 1M")
+        return
+    
+    if bet > user.wallet:
+        await ctx.send('Insufficient Funds.')
+    else:
+        
+        embed = discord.Embed(title='Blackjack', color=discord.Color.random())
+
+        player_card = ' '.join([random.choice(suits), random.choice(cards)])
+        player_card_value = card_map(player_card[1])
+        bot_card = ' '.join([random.choice(suits), random.choice(cards)])
+        bot_card_value = card_map(bot_card[1])
+        embed.add_field(name=f'Your Hand', value=f"{player_card}", inline=True)
+        embed.add_field(name=f'Total', value=f"```cs\n{player_card_value}```", inline=False)
+        embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=True)
+        embed.add_field(name=f'Total', value=f"```cs\n{bot_card_value}```", inline=False)
+        embed.set_thumbnail(url='https://cdn1.iconfinder.com/data/icons/sin-city-memories/128/poker-512.png')
+        await ctx.send(embed=embed)
+
+
+
+    session.commit()
+
+
 @bot.command(name='rps', help='Do a Rock Paper Scissors match.')
 async def rps(ctx, bet: str, rps: str):
     # Query if User exists
@@ -577,7 +614,6 @@ async def give(ctx, tagged_user, amount):
 
     session.commit()
 
-
 @bot.command(name='setlevel', help='Admin command only.')
 async def give(ctx, tagged_user, amount):
     user = session.query(User).filter_by(name=ctx.author.name).first()
@@ -610,7 +646,6 @@ async def give(ctx, tagged_user, amount):
         await ctx.send("Admin command only")
 
     session.commit()
-
 
 @bot.command(name='rob', help='Rob money from a player.')
 async def rob(ctx, tagged_user):
@@ -804,15 +839,24 @@ async def leaderboard(ctx, board_type: str):
         if board_type == 'wallet':
             users = session.query(User).order_by(User.wallet.desc()).limit(5).all()
             for idx, user in enumerate(users):
-                embed.add_field(name=f"{idx+1}. {user.name}", value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+                if idx == 1:
+                    embed.add_field(name=f"{idx+1}. {user.name} :crown:", value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+                else:
+                    embed.add_field(name=f"{idx+1}. {user.name}", value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
         elif board_type == 'bank':
             users = session.query(User).order_by(User.bank.desc()).limit(5).all()
             for idx, user in enumerate(users):
-                embed.add_field(name=f"{idx+1}. {user.name}", value=f"```cs\n${user.bank:,d} Gold```", inline=False)
+                if idx == 1:
+                    embed.add_field(name=f"{idx+1}. {user.name} :crown:", value=f"```cs\n${user.bank:,d} Gold```", inline=False)
+                else:
+                    embed.add_field(name=f"{idx+1}. {user.name}", value=f"```cs\n${user.bank:,d} Gold```", inline=False)
         elif board_type == 'level':
             users = session.query(User).order_by(User.level.desc()).limit(5).all()
             for idx, user in enumerate(users):
-                embed.add_field(name=f"{idx+1}. {user.name}", value=f"```cs\nLevel {user.level:,d}```", inline=False)
+                if idx == 1:
+                    embed.add_field(name=f"{idx+1}. {user.name} :crown:", value=f"```cs\nLevel {user.level:,d}```", inline=False)
+                else:
+                    embed.add_field(name=f"{idx+1}. {user.name}", value=f"```cs\nLevel {user.level:,d}```", inline=False)
         await ctx.send(embed=embed)
 
 @bot.command(name='cmd', help='Bot Commands.')
@@ -883,5 +927,22 @@ miner_level_urs = {
 }
 
 osrs_gp_url = 'https://oldschool.runescape.wiki/images/Coins_detail.png?404bc'
+
+suits = ['hearts', 'spades', 'clubs', 'diamonds']
+cards = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
+card_map = {
+    'A': 1,
+    '2': 2,
+    '3': 3,
+    '4': 4,
+    '5': 5,
+    '6': 6,
+    '7': 7,
+    '8': 8,
+    '9': 9,
+    'J': 10,
+    'Q': 10,
+    'K': 10
+}
 
 bot.run(TOKEN)
