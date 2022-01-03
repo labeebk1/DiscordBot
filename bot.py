@@ -245,7 +245,7 @@ async def roulette(ctx, bet: str, color: str):
     session.commit()
 
 
-@bot.command(name='challenge', help='Challenge a player to a roll.')
+@bot.command(name='challenge', aliases=["ch"], help='Challenge a player to a roll.')
 async def challenge(ctx, target_player, bet: str):
     # Query if User exists
     user = session.query(User).filter_by(name=ctx.author.name).first()
@@ -301,8 +301,8 @@ async def challenge(ctx, target_player, bet: str):
                 new_embed.add_field(name=f"{challenge_player.name} Wallet",
                                 value=f"```cs\n${challenge_player.wallet:,d} Gold```", inline=False)
                 new_embed.set_thumbnail(url='https://cdn-icons-png.flaticon.com/512/1732/1732452.png')
-
                 await message.edit(embed=new_embed)
+                
             elif challenge_player_roll > player_roll:
                 # Receipient won
                 challenge_player.wallet += 2*bet
@@ -468,7 +468,7 @@ async def blackjack(ctx, bet: str):
                 await ctx.send("Invalid Command for Blackjack. Please use keywords 'hit', 'stand', 'h', or 's'")
                 reply = await bot.wait_for(event="message", check=author_check(ctx.author), timeout=30.0)
             
-            if reply.content in ['hit', 'h']:
+            if reply.content in ['hit', 'h', "Hit", "H"]:
                 
                 player_card = Card()
                 player_cards.append(player_card)
@@ -484,7 +484,7 @@ async def blackjack(ctx, bet: str):
                     else:
                         c += 1 
 
-            if reply.content in ['stand', 's']:
+            if reply.content in ['stand', 's', "Stand", "s"]:
                 game = False
             
             player_cards_display = ' '.join([card.card + card.suits_value for card in player_cards])
