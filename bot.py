@@ -228,9 +228,9 @@ async def blackjack(ctx, bet: str):
         embed = discord.Embed(title='Blackjack', color=discord.Color.random())
 
         player_card = ' '.join([random.choice(suits), random.choice(cards)])
-        player_card_value = card_map(player_card[1])
+        player_card_value = card_map[player_card[1]]
         bot_card = ' '.join([random.choice(suits), random.choice(cards)])
-        bot_card_value = card_map(bot_card[1])
+        bot_card_value = card_map[bot_card[1]]
         embed.add_field(name=f'Your Hand', value=f"{player_card}", inline=True)
         embed.add_field(name=f'Total', value=f"```cs\n{player_card_value}```", inline=False)
         embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=True)
