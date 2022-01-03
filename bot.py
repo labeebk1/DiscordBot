@@ -466,7 +466,7 @@ async def collect(ctx):
                     value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
     await ctx.send(embed=embed)
 
-@bot.command(name='buy', help='Buy some stuff.')
+@bot.command(name='buy', aliases=["shop"], help='Buy some stuff.')
 async def buy(ctx, item=None):
     user = session.query(User).filter_by(name=ctx.author.name).first()
     
@@ -576,6 +576,41 @@ async def give(ctx, tagged_user, amount):
         await ctx.send(embed=embed)
 
     session.commit()
+
+
+@bot.command(name='setlevel', help='Admin command only.')
+async def give(ctx, tagged_user, amount):
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+    
+    amount = validate_bet(amount)
+
+    if not amount:
+        await ctx.send('Invalid amount to send.')
+    
+    members = ctx.message.mentions
+    if members:
+        member_name = members[0].name
+
+    if not members:
+        await ctx.send('You must tag someone to send money to them.')
+
+    recipient = session.query(User).filter_by(name=member_name).first()
+
+    if not recipient:
+        await ctx.send('User does not exist. They must create an account by typing !bal')
+    
+    if user.name == 'Koltzan':
+        embed = discord.Embed(title=f"Level Set for {recipient.name}", color=discord.Color.green())
+        recipient.level = amount
+        embed.add_field(name=f"{recipient.name}'s' Level",
+                        value=f"```cs\n{recipient.level:,d}```", inline=True)
+        await ctx.send(embed=embed)
+    
+    else:
+        await ctx.send("Admin command only")
+
+    session.commit()
+
 
 @bot.command(name='rob', help='Rob money from a player.')
 async def rob(ctx, tagged_user):
