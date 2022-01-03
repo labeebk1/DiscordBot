@@ -182,13 +182,13 @@ async def roulette(ctx, bet: str, color: str):
         await ctx.send("Invalid color selection. Please choose between red, r, green, g, black, b")
         return
     
-    if color == ['g', 'green']:
+    if color in ['g', 'green']:
         color = ':green_circle:'
     
     if color in ['r', 'red']:
         color = ':red_circle:'
 
-    if color == ['b', 'black']:
+    if color in ['b', 'black']:
         color = ':black_circle:'
 
     if bet > user.wallet:
@@ -208,7 +208,8 @@ async def roulette(ctx, bet: str, color: str):
 
         if table_color == color and table_color == ':green_circle:':
             big_win = True
-        elif table_color == color:
+        
+        if table_color == color:
             win = True
 
         if big_win:
@@ -476,6 +477,7 @@ async def blackjack(ctx, bet: str):
             await message.edit(embed=new_embed)
 
         else:
+            user.wallet += bet
             new_embed = discord.Embed(title='Blackjack - Draw', color=discord.Color.red())
             new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=False)
             new_embed.add_field(name=f'Total', value=f"```cs\n{player_score}```", inline=False)
