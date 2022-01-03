@@ -399,8 +399,6 @@ async def blackjack(ctx, bet: str):
 
     session.commit()
 
-
-
 @bot.command(name='rps', help='Do a Rock Paper Scissors match.')
 async def rps(ctx, bet: str, rps: str):
     # Query if User exists
