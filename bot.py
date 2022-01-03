@@ -4,6 +4,7 @@ import random
 import datetime
 
 import discord
+from discord import client
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -207,6 +208,8 @@ async def roll(ctx, bet: str):
 
     session.commit()
 
+def author_check(author):
+    return lambda message: message.author == author
 
 @bot.command(name='blackjack', aliases=["bj"], help='Roll against the bot.')
 async def blackjack(ctx, bet: str):
@@ -231,14 +234,16 @@ async def blackjack(ctx, bet: str):
         player_card = Card()
         bot_card = Card()
 
-        embed.add_field(name=f'Your Hand', value=f"{player_card}", inline=False)
+        embed.add_field(name=f'Your Hand', value=f"{player_card}", inline=True)
         embed.add_field(name=f'Total', value=f"```cs\n{player_card.value}```", inline=True)
-        embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=False)
+        embed.add_field(name=f"Bot's Hand", value=f"{bot_card}", inline=True)
         embed.add_field(name=f'Total', value=f"```cs\n{bot_card.value}```", inline=True)
         embed.add_field(name=f'Your Move', value=f"Hit, Stand", inline=False)
-        embed.set_thumbnail(url='https://cdn.iconscout.com/icon/premium/png-256-thumb/blackjack-3752994-3154690.png')
-        await ctx.send(embed=embed)
-
+        embed.set_thumbnail(url='https://cdn.iconscout.com/icon/premium/png-256-thumb/blackjack-2585915-2157681.png')
+        
+        message = await ctx.send(embed=embed)
+        reply = await ctx.wait_for("message", check=author_check(ctx.author), timeout=30.0)
+        print(reply.content)
 
     session.commit()
 
