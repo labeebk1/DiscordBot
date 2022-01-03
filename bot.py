@@ -346,7 +346,7 @@ async def blackjack(ctx, bet: str):
             new_embed.add_field(name=f'Total', value=f"```cs\n{dealer_score}```", inline=False)
             new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
             await message.edit(embed=new_embed)
-            asyncio.sleep(1)
+            await asyncio.sleep(1)
 
         if dealer_score > 21 or dealer_score < player_score:
             win = True
