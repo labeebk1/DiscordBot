@@ -710,6 +710,166 @@ async def blackjack(ctx, bet: str):
 
     session.commit()
 
+
+@bot.command(name='highlow', aliases=["hl"], help='Play High and Low against the bot. Min bet is 2M.')
+async def highlow(ctx, bet: str):
+    # Query if User exists
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+
+    if not user:
+        user = create_user(ctx.author.name)
+
+    bet = validate_bet(bet)
+
+    if not bet:
+        await ctx.send("Invalid bet. Format's Available: 1, 1k, 1K, 1m, 1M")
+        return
+    
+    if user.level < 4:
+        await ctx.send("You must be level 4 or higher to play.")
+        return
+
+    if bet < int(2 * (10**(user.level+2))):
+        await ctx.send(f"Minimum bet is {int(2 * (10**(user.level+2))):,d}.")
+        return
+
+    if bet > user.wallet:
+        await ctx.send('Insufficient Funds.')
+    else:
+        # Roll for the change at a ticket
+        embed = roll_ticket(user)
+        if embed:
+            await ctx.send(embed=embed)
+
+        user.wallet -= bet
+        session.commit()
+
+        game = True
+        win = False
+        reward = bet
+        player_cards = []
+        player_card = Card()
+
+        # Ace counts as 1, J as 11, Q as 12, K as 13
+        if player_card.card_value == 11:
+            player_card.card_value = 1
+        if player_card.card == 'J':
+            player_card.card_value = 11
+        if player_card.card == 'Q':
+            player_card.card_value = 12
+        if player_card.card == 'K':
+            player_card.card_value = 13
+
+        player_cards.append(player_card)
+        player_cards_display = ' '.join([card.card + card.suits_value for card in player_cards])
+
+        embed = discord.Embed(title='High Low - Round 1', color=discord.Color.random())
+        embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=False)
+        embed.add_field(name=f'Your Move', value=f"High (h) or Low (l)", inline=False)
+        embed.set_thumbnail(url='https://smartcasinoguide.com/app/uploads/2018/04/how-to-play-high-low-card-game.png')
+        embed.set_footer(text=f"{user.name}", icon_url = ctx.author.avatar_url)
+        message = await ctx.send(embed=embed)
+
+        round = 1
+        while game:
+
+            if round == 5:
+                win = True
+                break
+
+            if round > 1:
+                new_embed = discord.Embed(title=f'High Low - Round {round}', color=discord.Color.random())
+                new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=False)
+                new_embed.add_field(name=f'Current Reward', value=f"```cs\n${reward} Gold```", inline=False)
+                new_embed.add_field(name=f'Your Move', value=f"High (h) or Low (l)", inline=False)
+                new_embed.set_thumbnail(url='https://smartcasinoguide.com/app/uploads/2018/04/how-to-play-high-low-card-game.png')
+                new_embed.set_footer(text=f"{user.name}", icon_url = ctx.author.avatar_url)
+                await message.edit(embed=new_embed)
+
+            reply = await bot.wait_for(event="message", check=author_check(ctx.author), timeout=30.0)
+            
+            while reply.content not in ['h', "H", 'l', "L"]:
+                await ctx.send("Invalid Command for High/Low. Please use keywords 'h' ,'H', 'l', or 'L'")
+                reply = await bot.wait_for(event="message", check=author_check(ctx.author), timeout=30.0)
+            
+            next_card = Card()
+            # Ace counts as 1, J as 11, Q as 12, K as 13
+            if next_card.card_value == 11:
+                next_card.card_value = 1
+            if next_card.card == 'J':
+                next_card.card_value = 11
+            if next_card.card == 'Q':
+                next_card.card_value = 12
+            if next_card.card == 'K':
+                next_card.card_value = 13
+            
+            player_cards.append(next_card)
+            player_cards_display = ' '.join([card.card + card.suits_value for card in player_cards])
+
+            if reply.content in ['h', 'H']:
+                if next_card.card_value < player_card.card_value:
+                    game = False
+            
+            if reply.content in ['l', 'L']:
+                if next_card.card_value > player_card.card_value:
+                    game = False
+
+            if next_card.card_value == player_card.card_value:
+                game = False
+            
+            if game:
+                player_card = next_card
+                round += 1
+                reward = int(reward *  1.5)
+                new_embed = discord.Embed(title="Round Won!", color=discord.Color.green())
+                new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=False)
+                new_embed.add_field(name=f'Current Reward', value=f"```cs\n${reward} Gold```", inline=False)
+                new_embed.add_field(name=f'Your Move', value=f"High (h) or Low (l)", inline=False)
+                new_embed.set_thumbnail(url='https://smartcasinoguide.com/app/uploads/2018/04/how-to-play-high-low-card-game.png')
+                new_embed.set_footer(text=f"{user.name}", icon_url = ctx.author.avatar_url)
+                await message.edit(embed=new_embed)
+                await asyncio.sleep(1)
+            
+        if not win:
+            new_embed = discord.Embed(title='High Low - Loss', color=discord.Color.red())
+            new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=False)
+            new_embed.add_field(name="Result",
+                value=f"You lose! X_X", inline=False)
+            new_embed.add_field(name="Wallet",
+                value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+            new_embed.set_thumbnail(url='https://smartcasinoguide.com/app/uploads/2018/04/how-to-play-high-low-card-game.png')
+            new_embed.set_footer(text=f"{user.name}", icon_url = ctx.author.avatar_url)
+            await message.edit(embed=new_embed)
+        else:
+
+            # Wins a ticket
+            ticket = session.query(Ticket).filter_by(user_id=user.id).first()
+            if not ticket:
+                ticket = Ticket(
+                    user_id=user.id,
+                    tickets=0
+                )
+                session.add(ticket)
+                session.commit()
+
+            # Winner
+            user.wallet += reward
+            ticket.tickets += 1
+            session.commit()
+            new_embed = discord.Embed(title='High Low - Winner!', color=discord.Color.green())
+            new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=False)
+            new_embed.add_field(name="Result",
+                value=f"HOLY SHIT YOU WON! ^.^", inline=False)
+            new_embed.add_field(name="Earnings",
+                value=f"```cs\n${int(reward):,d} Gold, 1 Ticket```", inline=False)
+            new_embed.add_field(name="Wallet",
+                value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+            new_embed.add_field(name="Tickets",
+                value=f"```cs\n{ticket.tickets:,d} Tickets```", inline=False)
+            new_embed.set_thumbnail(url='https://www.onlineunitedstatescasinos.com/wp-content/uploads/2021/02/Online-Slot-Spinning-Reels-Jackpot-Icon.png')
+            new_embed.set_footer(text=f"{user.name}", icon_url = ctx.author.avatar_url)
+            await ctx.send(embed=new_embed)
+
 @bot.command(name='rps', help='Do a Rock Paper Scissors match.')
 async def rps(ctx, bet: str, rps: str):
     # Query if User exists
