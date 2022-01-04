@@ -828,7 +828,7 @@ async def highlow(ctx, bet: str):
                 new_embed.set_thumbnail(url='https://smartcasinoguide.com/app/uploads/2018/04/how-to-play-high-low-card-game.png')
                 new_embed.set_footer(text=f"{user.name}", icon_url = ctx.author.avatar_url)
                 await message.edit(embed=new_embed)
-                await asyncio.sleep(1)
+                await asyncio.sleep(0.5)
             
         if not win:
             new_embed = discord.Embed(title='High Low - Loss', color=discord.Color.red())
