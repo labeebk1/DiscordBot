@@ -442,7 +442,7 @@ async def ticket(ctx, roll=None):
 
     if not ticket:
         ticket = Ticket(
-            user_id=id,
+            user_id=user.id,
             tickets=0
         )
         session.commit()
@@ -450,7 +450,7 @@ async def ticket(ctx, roll=None):
     if not roll:
         embed = discord.Embed(title=f'Tickets', color=discord.Color.green())
         embed.add_field(name="Tickets",
-            value=f"```cs\n${ticket.tickets:,d} Tickets```", inline=False)
+            value=f"```cs\n{ticket.tickets:,d} Tickets```", inline=False)
         await ctx.send(embed=embed)
     else:
         if roll == 'roll' and ticket.tickets > 0:
@@ -1100,6 +1100,11 @@ async def giveticket(ctx, tagged_user):
     
     if user.name == 'Koltzan':
         ticket = session.query(Ticket).filter_by(user_id=recipient.id).first()
+        if not ticket:
+            ticket = Ticket(
+                user_id=recipient.id,
+                tickets=0
+            )
         ticket.tickets += 1
         embed = discord.Embed(title=f"Ticket Sent!", color=discord.Color.green())
         embed.add_field(name=f"{recipient.name}'s' Tickets",
