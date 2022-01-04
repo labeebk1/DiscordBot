@@ -1569,6 +1569,7 @@ async def commands(ctx):
     embed.add_field(name="dice", value="Play Dice. Format: .dice Amount 1-6", inline=False)
     embed.add_field(name="roll", value="Roll against the bot (1 to 100)", inline=False)
     embed.add_field(name="blackjack", value="Play Blackjack!", inline=False)
+    embed.add_field(name="highlow", value="Play High Low! Required Level 4 and minimum bet 2M. Format: .hl 2m", inline=False)
     embed.add_field(name="roulette", value="Play Roulette!", inline=False)
     embed.add_field(name="give", value="Give money to a player. Format: .give @Player Amount.", inline=False)
     embed.add_field(name="rob", value="Rob the shit out of a player. Format: .rob @Player", inline=False)
