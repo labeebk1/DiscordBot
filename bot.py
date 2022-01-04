@@ -1038,7 +1038,7 @@ async def daily(ctx):
 
     if not user:
         user = create_user(ctx.author.name)
-        user.wallet += 10000
+        user.wallet += 5000
 
         embed = discord.Embed(title=f'Daily Rewards!', color=discord.Color.green())
         embed.add_field(name=f'{ctx.author.display_name}', value="You earned some money!", inline=False)
@@ -1492,7 +1492,7 @@ async def steal(ctx, tagged_user):
             recipient.diamond = False
             embed = discord.Embed(title=f"You Robbed the Diamond off of {recipient.name}!!", color=discord.Color.green())
             embed.add_field(name=f"Diamond Owner",
-                            value=f"```cs\n{user.name:,d}```", inline=True)
+                            value=f"```cs\n{user.name}```", inline=True)
             embed.add_field(name=f"Result",
                             value=f"A new King has arrived.", inline=True)
             await ctx.send(embed=embed)
