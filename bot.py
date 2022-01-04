@@ -413,7 +413,7 @@ def roll_ticket(user: User):
 
     if not ticket:
         ticket = Ticket(
-            user_id=id,
+            user_id=user.id,
             tickets=0
         )
         session.add(ticket)
