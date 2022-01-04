@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from models import Hourly, Miner, Rob, Ticket, Timestamp, User
+from models import Miner, User, Ticket
 from card import Card
 
 # Load Discord Bot
@@ -46,7 +46,11 @@ async def balance(ctx):
         user = create_user(ctx.author.name)
 
     if user:
-        embed = discord.Embed(title=f"{user.name}'s Bank", 
+        if user.diamond == True:
+            embed = discord.Embed(title=f"King {user.name} :diamond_shape_with_a_dot_inside:", 
+                        color=discord.Color.random())
+        else:            
+            embed = discord.Embed(title=f"{user.name}'s Bank", 
                         color=discord.Color.random())
 
         if members:
@@ -407,23 +411,21 @@ def author_check(author):
 
 def roll_ticket(user: User):
     roll = random.randint(0,100)
-    ticket = session.query(Ticket).filter_by(user_id=user.id).first()
 
-    if not ticket:
+    if roll == 100:
+        # Add a Ticket to the Database
         ticket = Ticket(
             user_id=user.id,
-            tickets=0
+            level=user.level
         )
         session.add(ticket)
         session.commit()
+        ticket_count = session.query(Ticket).filter_by(user_id=user.id).count()
 
-    if roll == 100:
-        ticket.tickets += 1
-        session.commit()
         embed = discord.Embed(title='Ticket Winner!', color=discord.Color.green())
         embed.add_field(name=f'{user.name} just won a Ticket!', value=f"Congrats! $_$", inline=False)
         embed.add_field(name="Tickets",
-            value=f"```cs\n{ticket.tickets:,d} Tickets```", inline=False)
+            value=f"```cs\n{ticket_count:,d} Tickets```", inline=False)
         embed.set_thumbnail(url='https://upload.wikimedia.org/wikipedia/commons/a/a9/Scratch_game.jpg')
         return embed
 
@@ -433,29 +435,21 @@ def roll_ticket(user: User):
 async def ticket(ctx, roll=None):
     # Query if User exists
     user = session.query(User).filter_by(name=ctx.author.name).first()
-    ticket = session.query(Ticket).filter_by(user_id=user.id).first()
 
     if not user:
         await ctx.send('User does not exist. Type .bal to create an account.')
         return
 
-    if not ticket:
-        ticket = Ticket(
-            user_id=user.id,
-            tickets=0
-        )
-        session.add(ticket)
-        session.commit()
+    ticket_count = session.query(Ticket).filter_by(user_id=user.id).count()
 
     if not roll:
-        embed = discord.Embed(title=f'{user.name} Tickets', color=discord.Color.green())
+        embed = discord.Embed(title=f"{user.name}'s Tickets", color=discord.Color.green())
         embed.add_field(name="Tickets",
-            value=f"```cs\n{ticket.tickets:,d} Tickets```", inline=False)
+            value=f"```cs\n{ticket_count:,d} Tickets```", inline=False)
         await ctx.send(embed=embed)
     else:
-        if roll == 'roll' and ticket.tickets > 0:
-            ticket.tickets -= 1
-            session.commit()
+        if roll == 'roll' and ticket_count > 0:
+            ticket = session.query(Ticket).filter_by(user_id=user.id).first()
             dice = random.randint(0,100)
             if dice == 100:
                 user.level += 1
@@ -467,42 +461,46 @@ async def ticket(ctx, roll=None):
                 embed.set_thumbnail(url='https://cdn1.walsworthyearbooks.com/wyb/2019/09/05090507/Level-Up-Final-02-copy-1.jpg')
                 await ctx.send(embed=embed)
             elif dice > 80:
-                user.wallet += int(10**(user.level + 3))
+                user.wallet += int(10**(ticket.level + 3))
                 session.commit()
                 embed = discord.Embed(title='Big Win!', color=discord.Color.green())
                 embed.add_field(name=f'You won a BIG prize!', value=f"EZ MONEY", inline=False)
                 embed.add_field(name="Earnings",
-                    value=f"```cs\n${int(10**(user.level + 3)):,d} Gold```", inline=False)
+                    value=f"```cs\n${int(10**(ticket.level + 3)):,d} Gold```", inline=False)
                 embed.add_field(name="Wallet",
                     value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
-                embed.set_thumbnail(url='https://www.reviewjournal.com/wp-content/uploads/2015/10/thinkstockphotos-492226002_1.jpg')
+                embed.set_thumbnail(url='https://previews.123rf.com/images/tvoukent/tvoukent1911/tvoukent191100007/135375255-the-winner-retro-banner-with-glowing-lamps-winners-lottery-game-jackpot-prize-logo-vector-background.jpg')
                 await ctx.send(embed=embed)
             elif dice > 40:
-                user.wallet += int(0.5 * 10**(user.level + 3))
+                user.wallet += int(0.5 * 10**(ticket.level + 3))
                 session.commit()
                 embed = discord.Embed(title='Big Win!', color=discord.Color.green())
                 embed.add_field(name=f'You won a Common prize!', value=f"EZ MONEY", inline=False)
                 embed.add_field(name="Earnings",
-                    value=f"```cs\n${int(0.5 * 10**(user.level + 3)):,d} Gold```", inline=False)
+                    value=f"```cs\n${int(0.5 * 10**(ticket.level + 3)):,d} Gold```", inline=False)
                 embed.add_field(name="Wallet",
                     value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
-                embed.set_thumbnail(url='https://www.reviewjournal.com/wp-content/uploads/2015/10/thinkstockphotos-492226002_1.jpg')
+                embed.set_thumbnail(url='https://www.corecu.ie/wp-content/uploads/2019/10/Capture.jpg')
                 await ctx.send(embed=embed)
             else:
-                user.wallet += int(2 * 10**(user.level + 2))
+                user.wallet += int(2 * 10**(ticket.level + 2))
                 session.commit()
                 embed = discord.Embed(title='Minor Win!', color=discord.Color.green())
                 embed.add_field(name=f'You won a Minor prize!', value=f"Fair enough", inline=False)
                 embed.add_field(name="Earnings",
-                    value=f"```cs\n${int(2 * 10**(user.level + 2)):,d} Gold```", inline=False)
+                    value=f"```cs\n${int(2 * 10**(ticket.level + 2)):,d} Gold```", inline=False)
                 embed.add_field(name="Wallet",
                     value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
-                embed.set_thumbnail(url='https://www.reviewjournal.com/wp-content/uploads/2015/10/thinkstockphotos-492226002_1.jpg')
+                embed.set_thumbnail(url='https://www.casinoreports.ca/wp-content/uploads/2020/01/the_winner_of_the_largest_lottery_jackpot_-in_canadian_history.jpg')
                 await ctx.send(embed=embed)
-        elif roll == 'roll' and ticket.tickets == 0:
+            
+            session.delete(ticket)
+            session.commit()
+
+        elif roll == 'roll' and ticket_count == 0:
             await ctx.send('Not enough tickets buddy.')     
         else:
-            await ctx.send("Invalid Command.")
+            await ctx.send("Invalid Command. Options are .ticket or .ticket roll")
 
 @bot.command(name='blackjack', aliases=["bj"], help='Roll against the bot.')
 async def blackjack(ctx, bet: str):
@@ -523,7 +521,7 @@ async def blackjack(ctx, bet: str):
     else:
 
         # Roll for the change at a ticket
-        if bet > int(0.5* 10**(user.level+2)):
+        if bet >= int(0.5* 10**(user.level+2)):
             embed = roll_ticket(user)
             if embed:
                 await ctx.send(embed=embed)
@@ -722,10 +720,6 @@ async def highlow(ctx, bet: str):
         await ctx.send("Invalid bet. Format's Available: 1, 1k, 1K, 1m, 1M")
         return
     
-    if user.level < 4:
-        await ctx.send("You must be level 4 or higher to play.")
-        return
-
     if bet < int(2 * (10**(user.level+2))):
         await ctx.send(f"Minimum bet is {int(2 * (10**(user.level+2))):,d}.")
         return
@@ -840,18 +834,16 @@ async def highlow(ctx, bet: str):
         else:
 
             # Wins a ticket
-            ticket = session.query(Ticket).filter_by(user_id=user.id).first()
-            if not ticket:
-                ticket = Ticket(
-                    user_id=user.id,
-                    tickets=0
-                )
-                session.add(ticket)
-                session.commit()
+            ticket = Ticket(
+                user_id=user.id,
+                level=user.level
+            )
+            session.add(ticket)
+            session.commit()
+            ticket_count = session.query(Ticket).filter_by(user_id=user.id).count()
 
             # Winner
             user.wallet += reward
-            ticket.tickets += 1
             session.commit()
             new_embed = discord.Embed(title='High Low - Winner!', color=discord.Color.green())
             new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=False)
@@ -862,7 +854,7 @@ async def highlow(ctx, bet: str):
             new_embed.add_field(name="Wallet",
                 value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             new_embed.add_field(name="Tickets",
-                value=f"```cs\n{ticket.tickets:,d} Tickets```", inline=False)
+                value=f"```cs\n{ticket_count:,d} Tickets```", inline=False)
             new_embed.set_thumbnail(url='https://www.onlineunitedstatescasinos.com/wp-content/uploads/2021/02/Online-Slot-Spinning-Reels-Jackpot-Icon.png')
             new_embed.set_footer(text=f"{user.name}", icon_url = ctx.author.avatar_url)
             await message.edit(embed=new_embed)
@@ -973,46 +965,32 @@ async def work(ctx):
                         value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
         await ctx.send(embed=embed)
 
-        timestamp = Timestamp(
-            user_id=user.id,
-            last_worked=datetime.datetime.now()
-        )
-        session.add(timestamp)
+        user.last_work=datetime.datetime.now()
+        session.commit()
 
     else:
-        recent_job = session.query(Timestamp).filter_by(user_id=user.id).first()
+        recent_job = user.last_work
 
         earnings = 10 ** (user.level + 2)
-        if not recent_job:
+
+        if user.diamond == True:
+            earnings *= 2
+
+        time_delta = datetime.datetime.now() - recent_job
+        minutes = round(time_delta.total_seconds() / 60,0)
+        if minutes > 10:
             user.wallet += earnings
             embed = discord.Embed(title=f'Work Level {user.level}', color=discord.Color.green())
             embed.add_field(name=f'{ctx.author.display_name}', value=f"You earned ${earnings:,d}", inline=False)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
             await ctx.send(embed=embed)
-
-            timestamp = Timestamp(
-                user_id=user.id,
-                last_worked=datetime.datetime.now()
-            )
-            session.add(timestamp)
+            user.last_work = datetime.datetime.now()
         else:
-            time_delta = datetime.datetime.now() - recent_job.last_worked
-            minutes = round(time_delta.total_seconds() / 60,0)
-            if minutes > 10:
-                user.wallet += earnings
-                embed = discord.Embed(title=f'Work Level {user.level}', color=discord.Color.green())
-                embed.add_field(name=f'{ctx.author.display_name}', value=f"You earned ${earnings:,d}", inline=False)
-                embed.add_field(name="Wallet",
-                                value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
-                await ctx.send(embed=embed)
-                recent_job.last_worked = datetime.datetime.now()
-
-            else:
-                time_remaining = int(10-minutes)
-                embed = discord.Embed(title=f'Work Level {user.level}', color=discord.Color.red())
-                embed.add_field(name=f'{ctx.author.display_name}', value=f"{time_remaining} minutes remaining...", inline=False)
-                await ctx.send(embed=embed)
+            time_remaining = int(10-minutes)
+            embed = discord.Embed(title=f'Work Level {user.level}', color=discord.Color.red())
+            embed.add_field(name=f'{ctx.author.display_name}', value=f"{time_remaining} minutes remaining...", inline=False)
+            await ctx.send(embed=embed)
     
     session.commit()
 
@@ -1031,45 +1009,62 @@ async def hourly(ctx):
                         value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
         await ctx.send(embed=embed)
 
-        timestamp = Hourly(
-            user_id=user.id,
-            last_worked=datetime.datetime.now()
-        )
-        session.add(timestamp)
-
+        user.last_hourly = datetime.datetime.now()
+        session.commit()
     else:
-        recent_job = session.query(Hourly).filter_by(user_id=user.id).first()
-
-        if not recent_job:
+        time_delta = datetime.datetime.now() - user.last_hourly
+        minutes = round(time_delta.total_seconds() / 60,0)
+        if minutes > 60:
             user.wallet += int(2*(10 ** (user.level + 2)))
             embed = discord.Embed(title=f'Hourly Rewards!', color=discord.Color.green())
             embed.add_field(name=f'{ctx.author.display_name}', value="You earned some money!", inline=False)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
             await ctx.send(embed=embed)
-
-            timestamp = Hourly(
-                user_id=user.id,
-                last_worked=datetime.datetime.now()
-            )
-            session.add(timestamp)
+            user.last_hourly = datetime.datetime.now()
+            session.commit()
         else:
-            time_delta = datetime.datetime.now() - recent_job.last_worked
-            minutes = round(time_delta.total_seconds() / 60,0)
-            if minutes > 60:
-                user.wallet += int(2*(10 ** (user.level + 2)))
-                embed = discord.Embed(title=f'Hourly Rewards!', color=discord.Color.green())
-                embed.add_field(name=f'{ctx.author.display_name}', value="You earned some money!", inline=False)
-                embed.add_field(name="Wallet",
-                                value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
-                await ctx.send(embed=embed)
-                recent_job.last_worked = datetime.datetime.now()
+            time_remaining = int(60-minutes)
+            embed = discord.Embed(title=f'Hourly', color=discord.Color.red())
+            embed.add_field(name=f'{ctx.author.display_name}', value=f"{time_remaining} minutes remaining...", inline=False)
+            await ctx.send(embed=embed)
+    
+    session.commit()
 
-            else:
-                time_remaining = int(60-minutes)
-                embed = discord.Embed(title=f'Hourly', color=discord.Color.red())
-                embed.add_field(name=f'{ctx.author.display_name}', value=f"{time_remaining} minutes remaining...", inline=False)
-                await ctx.send(embed=embed)
+@bot.command(name='daily', help='Make some money every hour.')
+async def daily(ctx):
+    # Query if User exists
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+
+    if not user:
+        user = create_user(ctx.author.name)
+        user.wallet += 10000
+
+        embed = discord.Embed(title=f'Daily Rewards!', color=discord.Color.green())
+        embed.add_field(name=f'{ctx.author.display_name}', value="You earned some money!", inline=False)
+        embed.add_field(name="Wallet",
+                        value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
+        await ctx.send(embed=embed)
+
+        user.last_daily = datetime.datetime.now()
+        session.commit()
+    else:
+        time_delta = datetime.datetime.now() - user.last_daily
+        minutes = round(time_delta.total_seconds() / 60,0)
+        if minutes > 1440:
+            user.wallet += int(5*(10 ** (user.level + 2)))
+            embed = discord.Embed(title=f'Daily Rewards!', color=discord.Color.green())
+            embed.add_field(name=f'{ctx.author.display_name}', value="You earned some money!", inline=False)
+            embed.add_field(name="Wallet",
+                            value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
+            await ctx.send(embed=embed)
+            user.last_daily = datetime.datetime.now()
+            session.commit()
+        else:
+            time_remaining = int(1440-minutes)
+            embed = discord.Embed(title=f'Daily', color=discord.Color.red())
+            embed.add_field(name=f'{ctx.author.display_name}', value=f"{time_remaining} minutes remaining...", inline=False)
+            await ctx.send(embed=embed)
     
     session.commit()
 
@@ -1077,6 +1072,17 @@ async def hourly(ctx):
 async def miner(ctx):
     # Query if User exists
     user = session.query(User).filter_by(name=ctx.author.name).first()
+
+    members = ctx.message.mentions
+    if members:
+        member = members[0]
+        member_name = members[0].name
+
+    # Query if User exists
+    if members:
+        user = session.query(User).filter_by(name=member_name).first()
+    else:
+        user = session.query(User).filter_by(name=ctx.author.name).first()
 
     if not user:
         user = create_user(ctx.author.name)
@@ -1262,21 +1268,18 @@ async def giveticket(ctx, tagged_user):
         await ctx.send('User does not exist. They must create an account by typing !bal')
     
     if user.name == 'Koltzan':
-        ticket = session.query(Ticket).filter_by(user_id=recipient.id).first()
-        if not ticket:
-            ticket = Ticket(
-                user_id=recipient.id,
-                tickets=0
-            )
-            session.add(ticket)
-            session.commit()
-
-        ticket.tickets += 1
+        ticket = Ticket(
+            user_id=recipient.id,
+            level=recipient.level
+        )
+        session.add(ticket)
         session.commit()
+        
+        ticket_count = session.query(Ticket).filter_by(user_id=user.id).count()
 
         embed = discord.Embed(title=f"Ticket Sent!", color=discord.Color.green())
         embed.add_field(name=f"{recipient.name}'s' Tickets",
-                        value=f"```cs\n{ticket.tickets:,d} Tickets```", inline=True)
+                        value=f"```cs\n{ticket_count:,d} Tickets```", inline=True)
         await ctx.send(embed=embed)
         
 @bot.command(name='take', help='Take money from a player (admin only command).')
@@ -1344,6 +1347,34 @@ async def setlevel(ctx, tagged_user, amount):
 
     session.commit()
 
+@bot.command(name='givediamond', help='Admin command only.')
+async def givediamond(ctx, tagged_user):
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+    
+    members = ctx.message.mentions
+    if members:
+        member_name = members[0].name
+
+    if not members:
+        await ctx.send('You must tag someone to send money to them.')
+
+    recipient = session.query(User).filter_by(name=member_name).first()
+
+    if not recipient:
+        await ctx.send('User does not exist. They must create an account by typing !bal')
+    
+    if user.name == 'Koltzan':
+        embed = discord.Embed(title=f"Diamond given to: {recipient.name}", color=discord.Color.green())
+        recipient.diamond = True
+        embed.add_field(name=f"Result",
+                        value=f"A new King has arrived.", inline=True)
+        await ctx.send(embed=embed)
+    
+    else:
+        await ctx.send("Admin command only")
+
+    session.commit()
+
 @bot.command(name='rob', help='Rob money from a player.')
 async def rob(ctx, tagged_user):
     user = session.query(User).filter_by(name=ctx.author.name).first()
@@ -1365,27 +1396,18 @@ async def rob(ctx, tagged_user):
         await ctx.send("You need at least 1500 Gold to rob someone")
 
     else:
-        recent_robbery = session.query(Rob).filter_by(user_id=user.id).first()
-        
         rob_user = False
-        if not recent_robbery:
+        time_delta = datetime.datetime.now() - user.last_rob
+        minutes = round(time_delta.total_seconds() / 60,0)
+
+        if minutes > 20:
             rob_user = True
-            timestamp = Rob(
-                user_id = user.id,
-                last_worked=datetime.datetime.now()
-            )
-            session.add(timestamp)
+            user.last_rob = datetime.datetime.now()
         else:
-            time_delta = datetime.datetime.now() - recent_robbery.last_worked
-            minutes = round(time_delta.total_seconds() / 60,0)
-            if minutes > 20:
-                rob_user = True
-                recent_robbery.last_worked = datetime.datetime.now()
-            else:
-                time_remaining = int(20-minutes)
-                embed = discord.Embed(title=f'Robbery', color=discord.Color.red())
-                embed.add_field(name=f'{ctx.author.display_name}', value=f"{time_remaining} minutes remaining...", inline=False)
-                await ctx.send(embed=embed)
+            time_remaining = int(20-minutes)
+            embed = discord.Embed(title=f'Robbery', color=discord.Color.red())
+            embed.add_field(name=f'{ctx.author.display_name}', value=f"{time_remaining} minutes remaining...", inline=False)
+            await ctx.send(embed=embed)
         
         if rob_user:
             rob_result = random.randint(1,10)
@@ -1438,6 +1460,48 @@ async def rob(ctx, tagged_user):
                 embed.add_field(name=f"Your Wallet",
                                 value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
                 await ctx.send(embed=embed)
+
+    session.commit()
+
+@bot.command(name='steal', help='Steal the diamond from a player.')
+async def steal(ctx, tagged_user):
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+    
+    members = ctx.message.mentions
+    if members:
+        member_name = members[0].name
+
+    if not members:
+        await ctx.send('You must tag someone to rob them.')
+        return
+
+    recipient = session.query(User).filter_by(name=member_name).first()
+
+    if not recipient:
+        await ctx.send('User does not exist. They must create an account by typing !bal')
+    
+    steal_cost = int(10 ** (user.level + 2))
+
+    if user.wallet <  steal_cost:
+        await ctx.send(f"You need at least {steal_cost} Gold to rob someone")
+    elif user.diamond == False:
+        await ctx.send("User doesn't have the diamond dumbass..")
+    else:
+        rob_result = random.randint(1,10)
+        if rob_result == 10:
+            user.diamond = True
+            recipient.diamond = False
+            embed = discord.Embed(title=f"You Robbed the Diamond off of {recipient.name}!!", color=discord.Color.green())
+            embed.add_field(name=f"Diamond Owner",
+                            value=f"```cs\n{user.name:,d}```", inline=True)
+            embed.add_field(name=f"Result",
+                            value=f"A new King has arrived.", inline=True)
+            await ctx.send(embed=embed)
+        else:
+            embed = discord.Embed(title=f"You failed to rob the diamond off of {recipient.name}", color=discord.Color.red())
+            embed.add_field(name=f"Result",
+                            value=f"Don't fuck with the king.", inline=True)
+            await ctx.send(embed=embed)
 
     session.commit()
 
@@ -1570,6 +1634,7 @@ async def commands(ctx):
     embed.add_field(name="roulette", value="Play Roulette!", inline=False)
     embed.add_field(name="give", value="Give money to a player. Format: .give @Player Amount.", inline=False)
     embed.add_field(name="rob", value="Rob the shit out of a player. Format: .rob @Player", inline=False)
+    embed.add_field(name="steal", value="Steal the diamond from the diamond holder. Format: .steal @Player", inline=False)
     embed.add_field(name="challenge", value="Challenge a player to a roll. Format: .challenge @Player Amount", inline=False)
     embed.add_field(name="work", value="Work for some money. Level up to get more money.", inline=False)
     embed.add_field(name="hourly", value="Make money every hour.", inline=False)
@@ -1598,7 +1663,12 @@ def create_user(name):
         level=1,
         wallet=1000,
         bank=0,
-        shields=0
+        shields=0,
+        diamond=False,
+        last_work=datetime.datetime.min,
+        last_hourly=datetime.datetime.min,
+        last_daily=datetime.datetime.min,
+        last_rob=datetime.datetime.min
     )
     session.add(user)
     session.commit()
