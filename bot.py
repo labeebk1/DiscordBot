@@ -416,6 +416,7 @@ def roll_ticket(user: User):
             user_id=id,
             tickets=0
         )
+        session.add(ticket)
         session.commit()
 
     if roll == 100:
