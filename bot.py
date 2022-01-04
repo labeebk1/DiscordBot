@@ -13,7 +13,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import false
 
-from models import Hourly, Miner, Rob, Timestamp, User
+from models import Hourly, Miner, Rob, Ticket, Timestamp, User
 from card import Card
 
 # Load Discord Bot
@@ -86,6 +86,13 @@ async def flip(ctx, bet: str):
         await ctx.send('Insufficient Funds.')
     
     else:
+
+        # Roll for the change at a ticket
+        if bet > int(0.5* 10**(user.level+2)):
+            embed = roll_ticket()
+            if embed:
+                await ctx.send(embed=embed)
+
         if random.randint(0,1):
             user.wallet += bet
             embed = discord.Embed(title='Coin Flip', color=discord.Color.green())
@@ -137,6 +144,13 @@ async def dice(ctx, bet: str, dice_bet: str):
     elif bet > user.wallet:
         await ctx.send('Insufficient Funds.')
     else:
+
+        # Roll for the change at a ticket
+        if bet > int(0.5* 10**(user.level+2)):
+            embed = roll_ticket()
+            if embed:
+                await ctx.send(embed=embed)
+
         bot_bet = random.randint(1,6)
         win = False
         if bot_bet == dice_bet:
@@ -195,6 +209,12 @@ async def roulette(ctx, bet: str, color: str):
         await ctx.send('Insufficient Funds.')
     else:
         
+        # Roll for the change at a ticket
+        if bet > int(0.5* 10**(user.level+2)):
+            embed = roll_ticket()
+            if embed:
+                await ctx.send(embed=embed)
+
         number = random.randint(0,36)
         big_win = False
         win = False
@@ -243,7 +263,6 @@ async def roulette(ctx, bet: str, color: str):
             await ctx.send(embed=embed)
 
     session.commit()
-
 
 @bot.command(name='challenge', aliases=["ch"], help='Challenge a player to a roll.')
 async def challenge(ctx, target_player, bet: str):
@@ -349,6 +368,13 @@ async def roll(ctx, bet: str):
     if bet > user.wallet:
         await ctx.send('Insufficient Funds.')
     else:
+
+        # Roll for the change at a ticket
+        if bet > int(0.5* 10**(user.level+2)):
+            embed = roll_ticket()
+            if embed:
+                await ctx.send(embed=embed)
+
         bot_bet = random.randint(1,100)
         user_bet = random.randint(1,100)
 
@@ -381,6 +407,99 @@ async def roll(ctx, bet: str):
 def author_check(author):
     return lambda message: message.author == author
 
+def roll_ticket(user: User):
+    roll = random.randint(100)
+    ticket = session.query(Ticket).filter_by(user_id=user.id).first()
+
+    if not ticket:
+        ticket = Ticket(
+            user_id=id,
+            tickets=0
+        )
+        session.commit()
+
+    if roll == 100:
+        ticket.tickets += 1
+        session.commit()
+        embed = discord.Embed(title='Ticket Winner!', color=discord.Color.green())
+        embed.add_field(name=f'You just won a Ticket!', value=f"Congrats! $_$", inline=False)
+        embed.add_field(name="Tickets",
+            value=f"```cs\n${ticket.tickets:,d} Tickets```", inline=False)
+        embed.set_thumbnail(url='https://upload.wikimedia.org/wikipedia/commons/a/a9/Scratch_game.jpg')
+        return embed
+
+    return False
+
+@bot.command(name='ticket', help='Check your tickets. Or do .ticket roll to Roll a ticket.')
+async def ticket(ctx, roll=None):
+    # Query if User exists
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+    ticket = session.query(Ticket).filter_by(user_id=user.id).first()
+
+    if not user:
+        await ctx.send('User does not exist. Type .bal to create an account.')
+        return
+
+    if not ticket:
+        ticket = Ticket(
+            user_id=id,
+            tickets=0
+        )
+        session.commit()
+
+    if not roll:
+        embed = discord.Embed(title=f'Tickets', color=discord.Color.green())
+        embed.add_field(name="Tickets",
+            value=f"```cs\n${ticket.tickets:,d} Tickets```", inline=False)
+        await ctx.send(embed=embed)
+    else:
+        if roll == 'roll' and ticket.tickets > 0:
+            ticket.tickets -= 1
+            session.commit()
+            dice = random.randint(0,100)
+            if dice == 100:
+                user.level += 1
+                session.commit()
+                embed = discord.Embed(title='MAJOR PRIZE!', color=discord.Color.green())
+                embed.add_field(name=f'You just won the major prize!', value=f"A level up!!!", inline=False)
+                embed.add_field(name="Level",
+                    value=f"```cs\n{user.level}```", inline=False)
+                embed.set_thumbnail(url='https://cdn1.walsworthyearbooks.com/wyb/2019/09/05090507/Level-Up-Final-02-copy-1.jpg')
+                await ctx.send(embed=embed)
+            elif dice > 80:
+                user.wallet += int(10**(user.level + 3))
+                session.commit()
+                embed = discord.Embed(title='Big Win!', color=discord.Color.green())
+                embed.add_field(name=f'You won a BIG prize!', value=f"EZ MONEY", inline=False)
+                embed.add_field(name="Earnings",
+                    value=f"```cs\n${int(10**(user.level + 3)):,d} Gold```", inline=False)
+                embed.add_field(name="Wallet",
+                    value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+                embed.set_thumbnail(url='https://www.reviewjournal.com/wp-content/uploads/2015/10/thinkstockphotos-492226002_1.jpg')
+                await ctx.send(embed=embed)
+            elif dice > 40:
+                user.wallet += int(0.5 * 10**(user.level + 3))
+                session.commit()
+                embed = discord.Embed(title='Big Win!', color=discord.Color.green())
+                embed.add_field(name=f'You won a Common prize!', value=f"EZ MONEY", inline=False)
+                embed.add_field(name="Earnings",
+                    value=f"```cs\n${int(0.5 * 10**(user.level + 3)):,d} Gold```", inline=False)
+                embed.add_field(name="Wallet",
+                    value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+                embed.set_thumbnail(url='https://www.reviewjournal.com/wp-content/uploads/2015/10/thinkstockphotos-492226002_1.jpg')
+                await ctx.send(embed=embed)
+            else:
+                user.wallet += int(2 * 10**(user.level + 2))
+                session.commit()
+                embed = discord.Embed(title='Minor Win!', color=discord.Color.green())
+                embed.add_field(name=f'You won a Minor prize!', value=f"Fair enough", inline=False)
+                embed.add_field(name="Earnings",
+                    value=f"```cs\n${int(2 * 10**(user.level + 2)):,d} Gold```", inline=False)
+                embed.add_field(name="Wallet",
+                    value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+                embed.set_thumbnail(url='https://www.reviewjournal.com/wp-content/uploads/2015/10/thinkstockphotos-492226002_1.jpg')
+                await ctx.send(embed=embed)
+
 @bot.command(name='blackjack', aliases=["bj"], help='Roll against the bot.')
 async def blackjack(ctx, bet: str):
     # Query if User exists
@@ -398,6 +517,12 @@ async def blackjack(ctx, bet: str):
     if bet > user.wallet:
         await ctx.send('Insufficient Funds.')
     else:
+
+        # Roll for the change at a ticket
+        if bet > int(0.5* 10**(user.level+2)):
+            embed = roll_ticket()
+            if embed:
+                await ctx.send(embed=embed)
 
         user.wallet -= bet
         session.commit()
@@ -484,7 +609,7 @@ async def blackjack(ctx, bet: str):
                     else:
                         c += 1 
 
-            if reply.content in ['stand', 's', "Stand", "s"]:
+            if reply.content in ['stand', 's', "Stand", "S"]:
                 game = False
             
             player_cards_display = ' '.join([card.card + card.suits_value for card in player_cards])
@@ -615,6 +740,13 @@ async def rps(ctx, bet: str, rps: str):
         return
     
     else:
+
+        # Roll for the change at a ticket
+        if bet > int(0.5* 10**(user.level+2)):
+            embed = roll_ticket()
+            if embed:
+                await ctx.send(embed=embed)
+
         win = False
         draw = False
 
@@ -950,6 +1082,32 @@ async def give(ctx, tagged_user, amount):
 
     session.commit()
 
+@bot.command(name='giveticket', help='Give a ticket to a player (Admin command only)')
+async def giveticket(ctx, tagged_user):
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+    
+    members = ctx.message.mentions
+    if members:
+        member_name = members[0].name
+
+    if not members:
+        await ctx.send('You must tag someone to send money to them.')
+
+    recipient = session.query(User).filter_by(name=member_name).first()
+
+    if not recipient:
+        await ctx.send('User does not exist. They must create an account by typing !bal')
+    
+    if user.name == 'Koltzan':
+        ticket = session.query(Ticket).filter_by(user_id=recipient.id).first()
+        ticket.tickets += 1
+        embed = discord.Embed(title=f"Ticket Sent!", color=discord.Color.green())
+        embed.add_field(name=f"{recipient.name}'s' Tickets",
+                        value=f"```cs\n${ticket.tickets:,d} Tickets```", inline=True)
+        await ctx.send(embed=embed)
+        
+        session.commit()
+
 @bot.command(name='take', help='Take money from a player (admin only command).')
 async def take(ctx, tagged_user, amount):
     user = session.query(User).filter_by(name=ctx.author.name).first()
@@ -983,7 +1141,7 @@ async def take(ctx, tagged_user, amount):
     session.commit()
 
 @bot.command(name='setlevel', help='Admin command only.')
-async def give(ctx, tagged_user, amount):
+async def setlevel(ctx, tagged_user, amount):
     user = session.query(User).filter_by(name=ctx.author.name).first()
     
     amount = validate_bet(amount)
@@ -1245,6 +1403,7 @@ async def commands(ctx):
     embed.add_field(name="hourly", value="Make $5000 every hour.", inline=False)
     embed.add_field(name="miner", value="Check the status of your miner.", inline=False)
     embed.add_field(name="collect", value="Collect money from your miner.", inline=False)
+    embed.add_field(name="ticket", value="Check your tickets or roll a ticket. Format: .ticket roll", inline=False)
     embed.add_field(name="leaderboard", value="Check leaderboards by wallet, level, bank. Format: .leaderboard wallet", inline=False)
     await ctx.send(embed=embed)
 

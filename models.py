@@ -43,6 +43,11 @@ class Miner(Base):
     balance = Column(Integer)
     last_worked = Column(DateTime)
 
+class Ticket(Base):
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    tickets = Column(Integer)
+
 if __name__ == '__main__':
     engine = create_engine('sqlite:///gamble.db', echo = True)
     Base.metadata.create_all(engine)
