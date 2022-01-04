@@ -869,7 +869,7 @@ async def hourly(ctx):
         user.wallet += 5000
 
         embed = discord.Embed(title=f'Hourly Rewards!', color=discord.Color.green())
-        embed.add_field(name=f'{ctx.author.display_name}', value="You earned $5,000", inline=False)
+        embed.add_field(name=f'{ctx.author.display_name}', value="You earned some money!", inline=False)
         embed.add_field(name="Wallet",
                         value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
         await ctx.send(embed=embed)
@@ -886,7 +886,7 @@ async def hourly(ctx):
         if not recent_job:
             user.wallet += int(2*(10 ** (user.level + 2)))
             embed = discord.Embed(title=f'Hourly Rewards!', color=discord.Color.green())
-            embed.add_field(name=f'{ctx.author.display_name}', value="You earned $5,000", inline=False)
+            embed.add_field(name=f'{ctx.author.display_name}', value="You earned some money!", inline=False)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
             await ctx.send(embed=embed)
@@ -902,7 +902,7 @@ async def hourly(ctx):
             if minutes > 60:
                 user.wallet += int(2*(10 ** (user.level + 2)))
                 embed = discord.Embed(title=f'Hourly Rewards!', color=discord.Color.green())
-                embed.add_field(name=f'{ctx.author.display_name}', value="You earned $5,000", inline=False)
+                embed.add_field(name=f'{ctx.author.display_name}', value="You earned some money!", inline=False)
                 embed.add_field(name="Wallet",
                                 value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
                 await ctx.send(embed=embed)
