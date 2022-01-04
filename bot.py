@@ -823,7 +823,7 @@ async def highlow(ctx, bet: str):
                 reward = int(reward *  1.5)
                 new_embed = discord.Embed(title="Round Won!", color=discord.Color.green())
                 new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=False)
-                new_embed.add_field(name=f'Current Reward', value=f"```cs\n${reward} Gold```", inline=False)
+                new_embed.add_field(name=f'Potential Reward', value=f"```cs\n${reward} Gold```", inline=False)
                 new_embed.add_field(name=f'Your Move', value=f"High (h) or Low (l)", inline=False)
                 new_embed.set_thumbnail(url='https://smartcasinoguide.com/app/uploads/2018/04/how-to-play-high-low-card-game.png')
                 new_embed.set_footer(text=f"{user.name}", icon_url = ctx.author.avatar_url)
