@@ -868,7 +868,7 @@ async def highlow(ctx, bet: str):
                 value=f"```cs\n{ticket.tickets:,d} Tickets```", inline=False)
             new_embed.set_thumbnail(url='https://www.onlineunitedstatescasinos.com/wp-content/uploads/2021/02/Online-Slot-Spinning-Reels-Jackpot-Icon.png')
             new_embed.set_footer(text=f"{user.name}", icon_url = ctx.author.avatar_url)
-            await ctx.send(embed=new_embed)
+            await message.edit(embed=new_embed)
 
 @bot.command(name='rps', help='Do a Rock Paper Scissors match.')
 async def rps(ctx, bet: str, rps: str):
