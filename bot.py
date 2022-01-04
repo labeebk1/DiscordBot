@@ -89,7 +89,7 @@ async def flip(ctx, bet: str):
 
         # Roll for the change at a ticket
         if bet > int(0.5* 10**(user.level+2)):
-            embed = roll_ticket()
+            embed = roll_ticket(user)
             if embed:
                 await ctx.send(embed=embed)
 
@@ -147,7 +147,7 @@ async def dice(ctx, bet: str, dice_bet: str):
 
         # Roll for the change at a ticket
         if bet > int(0.5* 10**(user.level+2)):
-            embed = roll_ticket()
+            embed = roll_ticket(user)
             if embed:
                 await ctx.send(embed=embed)
 
@@ -211,7 +211,7 @@ async def roulette(ctx, bet: str, color: str):
         
         # Roll for the change at a ticket
         if bet > int(0.5* 10**(user.level+2)):
-            embed = roll_ticket()
+            embed = roll_ticket(user)
             if embed:
                 await ctx.send(embed=embed)
 
@@ -371,7 +371,7 @@ async def roll(ctx, bet: str):
 
         # Roll for the change at a ticket
         if bet > int(0.5* 10**(user.level+2)):
-            embed = roll_ticket()
+            embed = roll_ticket(user)
             if embed:
                 await ctx.send(embed=embed)
 
@@ -526,7 +526,7 @@ async def blackjack(ctx, bet: str):
 
         # Roll for the change at a ticket
         if bet > int(0.5* 10**(user.level+2)):
-            embed = roll_ticket()
+            embed = roll_ticket(user)
             if embed:
                 await ctx.send(embed=embed)
 
@@ -749,7 +749,7 @@ async def rps(ctx, bet: str, rps: str):
 
         # Roll for the change at a ticket
         if bet > int(0.5* 10**(user.level+2)):
-            embed = roll_ticket()
+            embed = roll_ticket(user)
             if embed:
                 await ctx.send(embed=embed)
 
