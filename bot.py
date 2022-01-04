@@ -445,6 +445,7 @@ async def ticket(ctx, roll=None):
             user_id=user.id,
             tickets=0
         )
+        session.add(ticket)
         session.commit()
 
     if not roll:
@@ -499,6 +500,11 @@ async def ticket(ctx, roll=None):
                     value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
                 embed.set_thumbnail(url='https://www.reviewjournal.com/wp-content/uploads/2015/10/thinkstockphotos-492226002_1.jpg')
                 await ctx.send(embed=embed)
+        if roll == 'roll' and ticket.tickets == 0:
+            await ctx.send('Not enough tickets buddy.')     
+        else:
+            await ctx.send("Invalid Command.")
+
 
 @bot.command(name='blackjack', aliases=["bj"], help='Roll against the bot.')
 async def blackjack(ctx, bet: str):
@@ -1105,11 +1111,15 @@ async def giveticket(ctx, tagged_user):
                 user_id=recipient.id,
                 tickets=0
             )
+            session.add(ticket)
+            session.commit()
+
         ticket.tickets += 1
         session.commit()
+
         embed = discord.Embed(title=f"Ticket Sent!", color=discord.Color.green())
         embed.add_field(name=f"{recipient.name}'s' Tickets",
-                        value=f"```cs\n${ticket.tickets:,d} Tickets```", inline=True)
+                        value=f"```cs\n{ticket.tickets:,d} Tickets```", inline=True)
         await ctx.send(embed=embed)
         
 
