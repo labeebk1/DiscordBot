@@ -408,7 +408,7 @@ def author_check(author):
     return lambda message: message.author == author
 
 def roll_ticket(user: User):
-    roll = random.randint(100)
+    roll = random.randint(0,100)
     ticket = session.query(Ticket).filter_by(user_id=user.id).first()
 
     if not ticket:
