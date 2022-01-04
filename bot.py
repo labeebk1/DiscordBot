@@ -1366,14 +1366,13 @@ async def givediamond(ctx, tagged_user):
     if user.name == 'Koltzan':
         embed = discord.Embed(title=f"Diamond given to: {recipient.name}", color=discord.Color.green())
         recipient.diamond = True
+        session.commit()
         embed.add_field(name=f"Result",
                         value=f"A new King has arrived.", inline=True)
         await ctx.send(embed=embed)
     
     else:
         await ctx.send("Admin command only")
-
-    session.commit()
 
 @bot.command(name='rob', help='Rob money from a player.')
 async def rob(ctx, tagged_user):
@@ -1484,7 +1483,7 @@ async def steal(ctx, tagged_user):
 
     if user.wallet <  steal_cost:
         await ctx.send(f"You need at least {steal_cost} Gold to rob someone")
-    elif user.diamond == False:
+    elif recipient.diamond == False:
         await ctx.send("User doesn't have the diamond dumbass..")
     else:
         rob_result = random.randint(1,10)
