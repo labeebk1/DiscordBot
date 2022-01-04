@@ -5,13 +5,11 @@ import random
 import datetime
 
 import discord
-from discord import client
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.expression import false
 
 from models import Hourly, Miner, Rob, Ticket, Timestamp, User
 from card import Card
@@ -710,7 +708,6 @@ async def blackjack(ctx, bet: str):
 
     session.commit()
 
-
 @bot.command(name='highlow', aliases=["hl"], help='Play High and Low against the bot. Min bet is 2M.')
 async def highlow(ctx, bet: str):
     # Query if User exists
@@ -752,7 +749,7 @@ async def highlow(ctx, bet: str):
 
         # Ace counts as 1, J as 11, Q as 12, K as 13
         if player_card.card_value == 11:
-            player_card.card_value = 1
+            player_card.card_value = 14
         if player_card.card == 'J':
             player_card.card_value = 11
         if player_card.card == 'Q':
@@ -795,7 +792,7 @@ async def highlow(ctx, bet: str):
             next_card = Card()
             # Ace counts as 1, J as 11, Q as 12, K as 13
             if next_card.card_value == 11:
-                next_card.card_value = 1
+                next_card.card_value = 14
             if next_card.card == 'J':
                 next_card.card_value = 11
             if next_card.card == 'Q':
@@ -820,7 +817,7 @@ async def highlow(ctx, bet: str):
             if game:
                 player_card = next_card
                 round += 1
-                reward = int(reward *  1.5)
+                reward = int(reward *  1.25)
                 new_embed = discord.Embed(title="Round Won!", color=discord.Color.green())
                 new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=False)
                 new_embed.add_field(name=f'Potential Reward', value=f"```cs\n${reward:,d} Gold```", inline=False)
@@ -1575,7 +1572,7 @@ async def commands(ctx):
     embed.add_field(name="rob", value="Rob the shit out of a player. Format: .rob @Player", inline=False)
     embed.add_field(name="challenge", value="Challenge a player to a roll. Format: .challenge @Player Amount", inline=False)
     embed.add_field(name="work", value="Work for some money. Level up to get more money.", inline=False)
-    embed.add_field(name="hourly", value="Make $5000 every hour.", inline=False)
+    embed.add_field(name="hourly", value="Make money every hour.", inline=False)
     embed.add_field(name="miner", value="Check the status of your miner.", inline=False)
     embed.add_field(name="collect", value="Collect money from your miner.", inline=False)
     embed.add_field(name="ticket", value="Check your tickets or roll a ticket. Format: .ticket roll", inline=False)
