@@ -424,7 +424,7 @@ def roll_ticket(user: User):
         embed = discord.Embed(title='Ticket Winner!', color=discord.Color.green())
         embed.add_field(name=f'You just won a Ticket!', value=f"Congrats! $_$", inline=False)
         embed.add_field(name="Tickets",
-            value=f"```cs\n${ticket.tickets:,d} Tickets```", inline=False)
+            value=f"```cs\n{ticket.tickets:,d} Tickets```", inline=False)
         embed.set_thumbnail(url='https://upload.wikimedia.org/wikipedia/commons/a/a9/Scratch_game.jpg')
         return embed
 
@@ -449,7 +449,7 @@ async def ticket(ctx, roll=None):
         session.commit()
 
     if not roll:
-        embed = discord.Embed(title=f'Tickets', color=discord.Color.green())
+        embed = discord.Embed(title=f'{user.name} Tickets', color=discord.Color.green())
         embed.add_field(name="Tickets",
             value=f"```cs\n{ticket.tickets:,d} Tickets```", inline=False)
         await ctx.send(embed=embed)
@@ -504,7 +504,6 @@ async def ticket(ctx, roll=None):
             await ctx.send('Not enough tickets buddy.')     
         else:
             await ctx.send("Invalid Command.")
-
 
 @bot.command(name='blackjack', aliases=["bj"], help='Roll against the bot.')
 async def blackjack(ctx, bet: str):
@@ -1122,7 +1121,6 @@ async def giveticket(ctx, tagged_user):
                         value=f"```cs\n{ticket.tickets:,d} Tickets```", inline=True)
         await ctx.send(embed=embed)
         
-
 @bot.command(name='take', help='Take money from a player (admin only command).')
 async def take(ctx, tagged_user, amount):
     user = session.query(User).filter_by(name=ctx.author.name).first()
