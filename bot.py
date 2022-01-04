@@ -423,7 +423,7 @@ def roll_ticket(user: User):
         ticket.tickets += 1
         session.commit()
         embed = discord.Embed(title='Ticket Winner!', color=discord.Color.green())
-        embed.add_field(name=f'You just won a Ticket!', value=f"Congrats! $_$", inline=False)
+        embed.add_field(name=f'{user.name} just won a Ticket!', value=f"Congrats! $_$", inline=False)
         embed.add_field(name="Tickets",
             value=f"```cs\n{ticket.tickets:,d} Tickets```", inline=False)
         embed.set_thumbnail(url='https://upload.wikimedia.org/wikipedia/commons/a/a9/Scratch_game.jpg')
