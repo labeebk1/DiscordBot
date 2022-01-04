@@ -500,7 +500,7 @@ async def ticket(ctx, roll=None):
                     value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
                 embed.set_thumbnail(url='https://www.reviewjournal.com/wp-content/uploads/2015/10/thinkstockphotos-492226002_1.jpg')
                 await ctx.send(embed=embed)
-        if roll == 'roll' and ticket.tickets == 0:
+        elif roll == 'roll' and ticket.tickets == 0:
             await ctx.send('Not enough tickets buddy.')     
         else:
             await ctx.send("Invalid Command.")
