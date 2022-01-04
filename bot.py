@@ -1106,12 +1106,12 @@ async def giveticket(ctx, tagged_user):
                 tickets=0
             )
         ticket.tickets += 1
+        session.commit()
         embed = discord.Embed(title=f"Ticket Sent!", color=discord.Color.green())
         embed.add_field(name=f"{recipient.name}'s' Tickets",
                         value=f"```cs\n${ticket.tickets:,d} Tickets```", inline=True)
         await ctx.send(embed=embed)
         
-        session.commit()
 
 @bot.command(name='take', help='Take money from a player (admin only command).')
 async def take(ctx, tagged_user, amount):
