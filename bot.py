@@ -1038,7 +1038,7 @@ async def daily(ctx):
 
     if not user:
         user = create_user(ctx.author.name)
-        user.wallet += 5000
+        user.wallet += 10000
 
         embed = discord.Embed(title=f'Daily Rewards!', color=discord.Color.green())
         embed.add_field(name=f'{ctx.author.display_name}', value="You earned some money!", inline=False)
@@ -1052,7 +1052,7 @@ async def daily(ctx):
         time_delta = datetime.datetime.now() - user.last_daily
         minutes = round(time_delta.total_seconds() / 60,0)
         if minutes > 1440:
-            user.wallet += int(5*(10 ** (user.level + 2)))
+            user.wallet += int(10*(10 ** (user.level + 2)))
             embed = discord.Embed(title=f'Daily Rewards!', color=discord.Color.green())
             embed.add_field(name=f'{ctx.author.display_name}', value="You earned some money!", inline=False)
             embed.add_field(name="Wallet",
