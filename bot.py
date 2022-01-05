@@ -119,8 +119,7 @@ async def flip(ctx, bet: str):
             embed = discord.Embed(title='Coin Flip', color=discord.Color.green())
 
             embed.add_field(name=f'{ctx.author.display_name}', value="You Won ^.^! :thumbsup:", inline=False)
-
-            embed.add_field(name=f"Taxes Paid to {casino_owner}",
+            embed.add_field(name=f"Taxes Paid to {casino_owner.name}",
                             value=f"```cs\n${tax_owing:,d} Gold```", inline=True)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
@@ -195,7 +194,7 @@ async def dice(ctx, bet: str, dice_bet: str):
             embed.add_field(name=f'{ctx.author.display_name}', value="Holy shit You Won ^.^! :thumbsup:", inline=False)
             embed.add_field(name="Winnings",
                             value=f"```cs\n${(5*bet - tax_owing):,d} Gold```", inline=False)
-            embed.add_field(name=f"Taxes Paid to {casino_owner}",
+            embed.add_field(name=f"Taxes Paid to {casino_owner.name}",
                             value=f"```cs\n${tax_owing:,d} Gold```", inline=True)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
@@ -284,7 +283,7 @@ async def roulette(ctx, bet: str, color: str):
             embed.add_field(name="Roulette Table", value=f"{number} :green_circle:", inline=True)
             embed.add_field(name="Earning",
                             value=f"```cs\n${int(35*bet - tax_owing):,d} Gold```", inline=False)
-            embed.add_field(name=f"Taxes Paid to {casino_owner}",
+            embed.add_field(name=f"Taxes Paid to {casino_owner.name}",
                             value=f"```cs\n${tax_owing:,d} Gold```", inline=True)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
@@ -304,7 +303,7 @@ async def roulette(ctx, bet: str, color: str):
             embed.add_field(name="Roulette Table", value=f"{number} {table_color}", inline=True)
             embed.add_field(name="Earning",
                             value=f"```cs\n${bet:,d} Gold```", inline=False)
-            embed.add_field(name=f"Taxes Paid to {casino_owner}",
+            embed.add_field(name=f"Taxes Paid to {casino_owner.name}",
                             value=f"```cs\n${tax_owing:,d} Gold```", inline=True)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
@@ -935,7 +934,7 @@ async def highlow(ctx, bet: str):
                 value=f"HOLY SHIT YOU WON! ^.^", inline=False)
             new_embed.add_field(name="Earnings",
                 value=f"```cs\n${int(reward):,d} Gold```", inline=False)
-            new_embed.add_field(name=f"Taxes Paid to {casino_owner}",
+            new_embed.add_field(name=f"Taxes Paid to {casino_owner.name}",
                             value=f"```cs\n${tax_owing:,d} Gold```", inline=True)
             new_embed.add_field(name="Wallet",
                 value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
@@ -1889,7 +1888,7 @@ miner_level_urs = {
 }
 
 def get_tax(level):
-    return 0.01*level
+    return 0.01*(level+1)
 
 osrs_gp_url = 'https://oldschool.runescape.wiki/images/Coins_detail.png?404bc'
 
