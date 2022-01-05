@@ -1273,8 +1273,14 @@ async def casino(ctx, cmd=None):
                             value=f"```cs\n${casino.balance:,d} Gold```", inline=True)
             embed.add_field(name="Tax Rate",
                             value=f"```cs\n{tax_rate:.0%} Tax```", inline=True)
-            embed.add_field(name="Casino Guests",
-                            value=f"```cs\n{member_names}```", inline=False)
+
+            if len(members):
+                embed.add_field(name="Casino Guests",
+                                value=f"```cs\n{member_names}```", inline=False)
+            else:
+                embed.add_field(name="Casino Guests",
+                                value=f"```Empty```", inline=False)
+
             await ctx.send(embed=embed)
         
         elif cmd == 'collect':
