@@ -1298,13 +1298,16 @@ async def buy(ctx, item=None):
     if not user:
         await ctx.send('User not found.')
     else:
+
+        check_casino(user)
+
         miner = session.query(Miner).filter_by(user_id=user.id).first()
         casino = session.query(Casino).filter_by(user_id=user.id).first()
         if not item:
             level_up_cost = 10 ** (user.level + 4)
             shield_cost = int(1.5 * (10 ** (user.level + 2)))
             miner_upgrade_cost = 2 * 10 ** (miner.level + 4)
-            casino_upgarde_cost = 10 ** (casino.level + 4)
+            casino_upgarde_cost = 10 ** (casino.level + 5)
             embed = discord.Embed(title=f"{ctx.author.display_name}'s Shop", color=discord.Color.random())
             embed.add_field(name='[ID: 1] Shield', value=f"```cs\n${shield_cost:,d} Gold```", inline=False)
             embed.add_field(name='[ID: 2] Level Up', value=f"```cs\n${level_up_cost:,d} Gold```", inline=False)
