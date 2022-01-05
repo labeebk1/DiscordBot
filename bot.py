@@ -120,9 +120,9 @@ async def flip(ctx, bet: str):
 
             embed.add_field(name=f'{ctx.author.display_name}', value="You Won ^.^! :thumbsup:", inline=False)
             embed.add_field(name=f"Taxes Paid to {casino_owner.name}",
-                            value=f"```cs\n${tax_owing:,d} Gold```", inline=True)
+                            value=f"```cs\n${tax_owing:,d} Gold```", inline=False)
             embed.add_field(name="Wallet",
-                            value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
+                            value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             
             await ctx.send(embed=embed)
         else:
@@ -195,7 +195,7 @@ async def dice(ctx, bet: str, dice_bet: str):
             embed.add_field(name="Winnings",
                             value=f"```cs\n${(5*bet - tax_owing):,d} Gold```", inline=False)
             embed.add_field(name=f"Taxes Paid to {casino_owner.name}",
-                            value=f"```cs\n${tax_owing:,d} Gold```", inline=True)
+                            value=f"```cs\n${tax_owing:,d} Gold```", inline=False)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             embed.set_thumbnail(url=osrs_gp_url)
@@ -284,7 +284,7 @@ async def roulette(ctx, bet: str, color: str):
             embed.add_field(name="Earning",
                             value=f"```cs\n${int(35*bet - tax_owing):,d} Gold```", inline=False)
             embed.add_field(name=f"Taxes Paid to {casino_owner.name}",
-                            value=f"```cs\n${tax_owing:,d} Gold```", inline=True)
+                            value=f"```cs\n${tax_owing:,d} Gold```", inline=False)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             embed.set_thumbnail(url='https://previews.123rf.com/images/hobbitfoot/hobbitfoot1709/hobbitfoot170900484/85929770-big-win-roulette-signboard-game-banner-design-.jpg')
@@ -304,7 +304,7 @@ async def roulette(ctx, bet: str, color: str):
             embed.add_field(name="Earning",
                             value=f"```cs\n${bet:,d} Gold```", inline=False)
             embed.add_field(name=f"Taxes Paid to {casino_owner.name}",
-                            value=f"```cs\n${tax_owing:,d} Gold```", inline=True)
+                            value=f"```cs\n${tax_owing:,d} Gold```", inline=False)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             await ctx.send(embed=embed)
@@ -935,7 +935,7 @@ async def highlow(ctx, bet: str):
             new_embed.add_field(name="Earnings",
                 value=f"```cs\n${int(reward):,d} Gold```", inline=False)
             new_embed.add_field(name=f"Taxes Paid to {casino_owner.name}",
-                            value=f"```cs\n${tax_owing:,d} Gold```", inline=True)
+                            value=f"```cs\n${tax_owing:,d} Gold```", inline=False)
             new_embed.add_field(name="Wallet",
                 value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             new_embed.set_thumbnail(url='https://www.onlineunitedstatescasinos.com/wp-content/uploads/2021/02/Online-Slot-Spinning-Reels-Jackpot-Icon.png')
@@ -1065,7 +1065,7 @@ async def work(ctx):
         embed.add_field(name="Wallet",
                         value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
         embed.add_field(name=f"Entering {casino_owner.name}'s Casino",
-                        value=f"```cs\n{tax_rate:.2%} Tax```", inline=True)
+                        value=f"```cs\n{tax_rate:.0%} Tax```", inline=True)
         await ctx.send(embed=embed)
 
     else:
@@ -1090,7 +1090,7 @@ async def work(ctx):
             embed = discord.Embed(title=f'Work Level {user.level}', color=discord.Color.green())
             embed.add_field(name=f'{ctx.author.display_name}', value=f"You earned ${earnings:,d}", inline=False)
             embed.add_field(name=f"Entering {casino_owner.name}'s Casino",
-                        value=f"```cs\n{tax_rate:.2%} Tax```", inline=True)
+                        value=f"```cs\n{tax_rate:.0%} Tax```", inline=True)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
             await ctx.send(embed=embed)
@@ -1272,7 +1272,7 @@ async def casino(ctx, cmd=None):
             embed.add_field(name="Total Earned",
                             value=f"```cs\n${casino.balance:,d} Gold```", inline=True)
             embed.add_field(name="Tax Rate",
-                            value=f"```cs\n{tax_rate:.2%} Tax```", inline=True)
+                            value=f"```cs\n{tax_rate:.0%} Tax```", inline=True)
             embed.add_field(name="Casino Guests",
                             value=f"```cs\n{member_names}```", inline=False)
             await ctx.send(embed=embed)
@@ -1357,7 +1357,7 @@ async def buy(ctx, item=None):
                 await ctx.send(embed=embed)
 
         elif item == '4':
-            casino_upgarde_cost = 10 ** (casino.level + 4)
+            casino_upgarde_cost = 10 ** (casino.level + 5)
             if user.wallet < casino_upgarde_cost: 
                 await ctx.send('Insufficient Funds in wallet to level up your casino.')
             else:
@@ -1366,7 +1366,7 @@ async def buy(ctx, item=None):
                 tax_rate = get_tax(casino.level)
                 embed = discord.Embed(title=f"{ctx.author.display_name}'s Casino has leveled up!", color=discord.Color.green())
                 embed.add_field(name="New Tax Rate",
-                                value=f"```cs\n{tax_rate:.2%} Tax```", inline=True)
+                                value=f"```cs\n{tax_rate:.0%} Tax```", inline=True)
                 await ctx.send(embed=embed)
         else:
             await ctx.send('Item not in shop.')
