@@ -471,7 +471,7 @@ async def roll(ctx, bet: str):
 
 def check_casino(user: User):
     if not user.casino:
-        casino = session.query(Casino).order_by(func.rand()).first()
+        casino = session.query(Casino).order_by(func.random()).first()
         user.casino = casino.id
         session.commit()
 
@@ -1055,7 +1055,7 @@ async def work(ctx):
         user.last_work=datetime.datetime.now()
 
         # Entering a casino
-        casino = session.query(Casino).order_by(func.rand()).first()
+        casino = session.query(Casino).order_by(func.random()).first()
         casino_owner = session.query(User).filter_by(user_id=casino.user_id).first()
         user.casino = casino.id
         tax_rate = get_tax(casino.level)
@@ -1083,7 +1083,7 @@ async def work(ctx):
             user.wallet += earnings
 
             # Entering a casino
-            casino = session.query(Casino).order_by(func.rand()).first()
+            casino = session.query(Casino).order_by(func.random()).first()
             casino_owner = session.query(User).filter_by(user_id=casino.user_id).first()
             user.casino = casino.id
             tax_rate = get_tax(casino.level)
