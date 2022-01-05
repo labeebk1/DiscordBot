@@ -9,7 +9,7 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
-    casino = Column(Integer, ForeignKey('casino.id'), Required=False)
+    casino = Column(Integer, ForeignKey('casino.id'))
     name = Column(String)
     level = Column(Integer)
     wallet = Column(Integer)
