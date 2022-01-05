@@ -1487,6 +1487,7 @@ async def steal(ctx, tagged_user):
         await ctx.send("User doesn't have the diamond dumbass..")
     else:
         rob_result = random.randint(1,10)
+        user.wallet -= 10 ** (user.level + 2)
         if rob_result == 10:
             user.diamond = True
             recipient.diamond = False
