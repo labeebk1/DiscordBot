@@ -1063,10 +1063,10 @@ async def work(ctx):
 
         embed = discord.Embed(title=f'Work Level {user.level}', color=discord.Color.green())
         embed.add_field(name=f'{ctx.author.display_name}', value="You earned $1,000", inline=False)
-        embed.add_field(name=f"Entering {casino_owner.name}'s Casino",
-                        value=f"```cs\n{tax_rate:.1%} Tax```", inline=True)
         embed.add_field(name="Wallet",
                         value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
+        embed.add_field(name=f"Entering {casino_owner.name}'s Casino",
+                        value=f"```cs\n{tax_rate:.2%} Tax```", inline=True)
         await ctx.send(embed=embed)
 
     else:
@@ -1091,7 +1091,7 @@ async def work(ctx):
             embed = discord.Embed(title=f'Work Level {user.level}', color=discord.Color.green())
             embed.add_field(name=f'{ctx.author.display_name}', value=f"You earned ${earnings:,d}", inline=False)
             embed.add_field(name=f"Entering {casino_owner.name}'s Casino",
-                        value=f"```cs\n{tax_rate:.1%} Tax```", inline=True)
+                        value=f"```cs\n{tax_rate:.2%} Tax```", inline=True)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
             await ctx.send(embed=embed)
@@ -1273,7 +1273,7 @@ async def casino(ctx, cmd=None):
             embed.add_field(name="Total Earned",
                             value=f"```cs\n${casino.balance:,d} Gold```", inline=True)
             embed.add_field(name="Tax Rate",
-                            value=f"```cs\n{tax_rate:.1%} Tax```", inline=True)
+                            value=f"```cs\n{tax_rate:.2%} Tax```", inline=True)
             embed.add_field(name="Casino Guests",
                             value=f"```cs\n{member_names}```", inline=False)
             await ctx.send(embed=embed)
@@ -1367,7 +1367,7 @@ async def buy(ctx, item=None):
                 tax_rate = get_tax(casino.level)
                 embed = discord.Embed(title=f"{ctx.author.display_name}'s Casino has leveled up!", color=discord.Color.green())
                 embed.add_field(name="New Tax Rate",
-                                value=f"```cs\n{tax_rate:.1%} Tax```", inline=True)
+                                value=f"```cs\n{tax_rate:.2%} Tax```", inline=True)
                 await ctx.send(embed=embed)
         else:
             await ctx.send('Item not in shop.')
