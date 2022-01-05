@@ -1056,7 +1056,7 @@ async def work(ctx):
 
         # Entering a casino
         casino = session.query(Casino).order_by(func.random()).first()
-        casino_owner = session.query(User).filter_by(user_id=casino.user_id).first()
+        casino_owner = session.query(User).filter_by(id=casino.user_id).first()
         user.casino = casino.id
         tax_rate = get_tax(casino.level)
         session.commit()
@@ -1084,7 +1084,7 @@ async def work(ctx):
 
             # Entering a casino
             casino = session.query(Casino).order_by(func.random()).first()
-            casino_owner = session.query(User).filter_by(user_id=casino.user_id).first()
+            casino_owner = session.query(User).filter_by(id=casino.user_id).first()
             user.casino = casino.id
             tax_rate = get_tax(casino.level)
 
@@ -1271,11 +1271,11 @@ async def casino(ctx, cmd=None):
         if not cmd:
             embed = discord.Embed(title=f"{ctx.author.display_name}'s Casino", color=discord.Color.green())
             embed.add_field(name="Total Earned",
-                            value=f"```cs\n%{casino.balance:,d} Gold```", inline=True)
+                            value=f"```cs\n${casino.balance:,d} Gold```", inline=True)
             embed.add_field(name="Tax Rate",
                             value=f"```cs\n{tax_rate:.1%} Tax```", inline=True)
             embed.add_field(name="Casino Guests",
-                            value=f"```cs\n{member_names}```", inline=True)
+                            value=f"```cs\n{member_names}```", inline=False)
             await ctx.send(embed=embed)
         
         elif cmd == 'collect':
