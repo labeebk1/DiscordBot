@@ -1897,7 +1897,7 @@ miner_level_urs = {
 }
 
 def get_tax(level):
-    return 0.01*(level+1)
+    return 0.02*(level+1)
 
 osrs_gp_url = 'https://oldschool.runescape.wiki/images/Coins_detail.png?404bc'
 
