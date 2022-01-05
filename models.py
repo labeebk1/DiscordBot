@@ -1,4 +1,5 @@
 import datetime
+from typing_extensions import Required
 from sqlalchemy import create_engine
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import declarative_base
@@ -8,6 +9,7 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
+    casino = Column(Integer, ForeignKey('casino.id'), Required=False)
     name = Column(String)
     level = Column(Integer)
     wallet = Column(Integer)
@@ -29,6 +31,13 @@ class Miner(Base):
     level = Column(Integer)
     balance = Column(Integer)
     last_worked = Column(DateTime)
+
+class Casino(Base):
+    __tablename__ = 'casino'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    level = Column(Integer)
+    balance = Column(Integer)
 
 class Ticket(Base):
     __tablename__ = 'ticket'

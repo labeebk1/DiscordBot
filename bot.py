@@ -10,8 +10,9 @@ from dotenv import load_dotenv
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.expression import func
 
-from models import Miner, User, Ticket
+from models import Casino, Miner, User, Ticket
 from card import Card
 
 # Load Discord Bot
@@ -45,6 +46,14 @@ async def balance(ctx):
     if not user and not members:
         user = create_user(ctx.author.name)
 
+    casino = session.query(Casino).filter_by(user_id=user.id).first()
+    if not casino:
+        casino = create_casino(user)
+    
+    if not user.casino:
+        user.casino = casino.id
+    casino_guests = session.query(User).filter_by(casino=casino.id).count()
+
     if user:
         if user.diamond == True:
             embed = discord.Embed(title=f"King {user.name} :diamond_shape_with_a_dot_inside:", 
@@ -65,7 +74,7 @@ async def balance(ctx):
         embed.add_field(name="Bank",
                         value=f"```cs\n${user.bank:,d} Gold```", inline=True)
 
-        embed.set_footer(text=f"{user.shields} Active Shields", icon_url = "https://thumbs.dreamstime.com/b/well-organized-fully-editable-antivirus-protection-security-icon-any-use-like-print-media-web-commercial-use-any-kind-158454387.jpg")
+        embed.set_footer(text=f"{user.shields} Active Shields, {casino_guests} Casino Guests", icon_url = "https://thumbs.dreamstime.com/b/well-organized-fully-editable-antivirus-protection-security-icon-any-use-like-print-media-web-commercial-use-any-kind-158454387.jpg")
 
         await ctx.send(embed=embed)
     else:
@@ -79,6 +88,8 @@ async def flip(ctx, bet: str):
     if not user:
         user = create_user(ctx.author.name)
 
+    check_casino(user)
+
     bet = validate_bet(bet)
 
     if not bet:
@@ -90,17 +101,27 @@ async def flip(ctx, bet: str):
     else:
 
         # Roll for the change at a ticket
-        if bet > int(0.5* 10**(user.level+2)):
+        if bet > int(2 * 10**(user.level+2)):
             embed = roll_ticket(user)
             if embed:
                 await ctx.send(embed=embed)
 
         if random.randint(0,1):
-            user.wallet += bet
+            
+            casino = session.query(Casino).filter_by(id=user.casino).first()
+            casino_owner = session.query(User).filter_by(id=casino.user_id).first()
+            tax_rate = get_tax(casino.level)
+            tax_owing = int(tax_rate * bet)
+
+            user.wallet += (bet - tax_owing)
+            casino.balance += tax_owing
+
             embed = discord.Embed(title='Coin Flip', color=discord.Color.green())
 
             embed.add_field(name=f'{ctx.author.display_name}', value="You Won ^.^! :thumbsup:", inline=False)
 
+            embed.add_field(name=f"Taxes Paid to {casino_owner}",
+                            value=f"```cs\n${tax_owing:,d} Gold```", inline=True)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
             
@@ -127,6 +148,8 @@ async def dice(ctx, bet: str, dice_bet: str):
     if not user:
         user = create_user(ctx.author.name)
 
+    check_casino(user)
+
     bet = validate_bet(bet)
 
     if not bet:
@@ -148,7 +171,7 @@ async def dice(ctx, bet: str, dice_bet: str):
     else:
 
         # Roll for the change at a ticket
-        if bet > int(0.5* 10**(user.level+2)):
+        if bet > int(2 * 10**(user.level+2)):
             embed = roll_ticket(user)
             if embed:
                 await ctx.send(embed=embed)
@@ -159,11 +182,21 @@ async def dice(ctx, bet: str, dice_bet: str):
             win = True
 
         if win:
-            user.wallet += 5*bet
+
+            casino = session.query(Casino).filter_by(id=user.casino).first()
+            casino_owner = session.query(User).filter_by(id=casino.user_id).first()
+            tax_rate = get_tax(casino.level)
+            tax_owing = int(tax_rate * 5*bet)
+
+            user.wallet += (5*bet - tax_owing)
+            casino.balance += tax_owing
+
             embed = discord.Embed(title='Dice', color=discord.Color.green())
             embed.add_field(name=f'{ctx.author.display_name}', value="Holy shit You Won ^.^! :thumbsup:", inline=False)
             embed.add_field(name="Winnings",
-                            value=f"```cs\n${5*bet:,d} Gold```", inline=False)
+                            value=f"```cs\n${(5*bet - tax_owing):,d} Gold```", inline=False)
+            embed.add_field(name=f"Taxes Paid to {casino_owner}",
+                            value=f"```cs\n${tax_owing:,d} Gold```", inline=True)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             embed.set_thumbnail(url=osrs_gp_url)
@@ -187,6 +220,8 @@ async def roulette(ctx, bet: str, color: str):
 
     if not user:
         user = create_user(ctx.author.name)
+
+    check_casino(user)
 
     bet = validate_bet(bet)
 
@@ -212,7 +247,7 @@ async def roulette(ctx, bet: str, color: str):
     else:
         
         # Roll for the change at a ticket
-        if bet > int(0.5* 10**(user.level+2)):
+        if bet > int(2 * 10**(user.level+2)):
             embed = roll_ticket(user)
             if embed:
                 await ctx.send(embed=embed)
@@ -235,23 +270,42 @@ async def roulette(ctx, bet: str, color: str):
             win = True
 
         if big_win:
-            user.wallet += 35*bet
+
+            casino = session.query(Casino).filter_by(id=user.casino).first()
+            casino_owner = session.query(User).filter_by(id=casino.user_id).first()
+            tax_rate = get_tax(casino.level)
+            tax_owing = int(tax_rate * 35*bet)
+
+            user.wallet += (35*bet - tax_owing)
+            casino.balance += tax_owing
+
             embed = discord.Embed(title='Roulette BIG WIN', color=discord.Color.green())
             embed.add_field(name=f'{ctx.author.display_name}', value="Holy shit You Won the major Prize!! ^.^! :thumbsup:", inline=False)
             embed.add_field(name="Roulette Table", value=f"{number} :green_circle:", inline=True)
             embed.add_field(name="Earning",
-                            value=f"```cs\n${35*bet:,d} Gold```", inline=False)
+                            value=f"```cs\n${int(35*bet - tax_owing):,d} Gold```", inline=False)
+            embed.add_field(name=f"Taxes Paid to {casino_owner}",
+                            value=f"```cs\n${tax_owing:,d} Gold```", inline=True)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             embed.set_thumbnail(url='https://previews.123rf.com/images/hobbitfoot/hobbitfoot1709/hobbitfoot170900484/85929770-big-win-roulette-signboard-game-banner-design-.jpg')
             await ctx.send(embed=embed)
         elif win:
-            user.wallet += bet
+            casino = session.query(Casino).filter_by(id=user.casino).first()
+            casino_owner = session.query(User).filter_by(id=casino.user_id).first()
+            tax_rate = get_tax(casino.level)
+            tax_owing = int(tax_rate * bet)
+
+            user.wallet += (bet - tax_owing)
+            casino.balance += tax_owing
+
             embed = discord.Embed(title='Roulette Win!', color=discord.Color.green())
             embed.add_field(name=f'{ctx.author.display_name}', value="You win! :thumbsup:", inline=False)
             embed.add_field(name="Roulette Table", value=f"{number} {table_color}", inline=True)
             embed.add_field(name="Earning",
                             value=f"```cs\n${bet:,d} Gold```", inline=False)
+            embed.add_field(name=f"Taxes Paid to {casino_owner}",
+                            value=f"```cs\n${tax_owing:,d} Gold```", inline=True)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             await ctx.send(embed=embed)
@@ -360,6 +414,8 @@ async def roll(ctx, bet: str):
 
     if not user:
         user = create_user(ctx.author.name)
+    
+    check_casino(user)
 
     bet = validate_bet(bet)
 
@@ -372,7 +428,7 @@ async def roll(ctx, bet: str):
     else:
 
         # Roll for the change at a ticket
-        if bet > int(0.5* 10**(user.level+2)):
+        if bet > int(2 * 10**(user.level+2)):
             embed = roll_ticket(user)
             if embed:
                 await ctx.send(embed=embed)
@@ -385,7 +441,14 @@ async def roll(ctx, bet: str):
             win = True
 
         if win:
-            user.wallet += bet
+
+            casino = session.query(Casino).filter_by(id=user.casino).first()
+            tax_rate = get_tax(casino.level)
+            tax_owing = int(tax_rate * bet)
+
+            user.wallet += (bet - tax_owing)
+            casino.balance += tax_owing
+
             embed = discord.Embed(title='Roll', color=discord.Color.green())
             embed.add_field(name=f'{ctx.author.display_name}', value="Holy shit You Won ^.^! :thumbsup:", inline=False)
             embed.add_field(name="Your Roll", value=f"```{user_bet}```", inline=True)
@@ -406,13 +469,19 @@ async def roll(ctx, bet: str):
 
     session.commit()
 
+def check_casino(user: User):
+    if not user.casino:
+        casino = session.query(Casino).order_by(func.rand()).first()
+        user.casino = casino.id
+        session.commit()
+
 def author_check(author):
     return lambda message: message.author == author
 
 def roll_ticket(user: User):
-    roll = random.randint(0,100)
+    roll = random.randint(0,150)
 
-    if roll == 100:
+    if roll == 150:
         # Add a Ticket to the Database
         ticket = Ticket(
             user_id=user.id,
@@ -448,8 +517,6 @@ async def ticket(ctx, roll=None):
             value=f"```cs\n{ticket_count:,d} Tickets```", inline=False)
         await ctx.send(embed=embed)
     else:
-        # await ctx.send("Currently disabled.")
-        # return
         if roll == 'roll' and ticket_count > 0:
             ticket = session.query(Ticket).filter_by(user_id=user.id).first()
             dice = random.randint(0,100)
@@ -512,6 +579,8 @@ async def blackjack(ctx, bet: str):
     if not user:
         user = create_user(ctx.author.name)
 
+    check_casino(user)
+
     bet = validate_bet(bet)
 
     if not bet:
@@ -523,7 +592,7 @@ async def blackjack(ctx, bet: str):
     else:
 
         # Roll for the change at a ticket
-        if bet >= int(0.5* 10**(user.level+2)):
+        if bet >= int(2 * 10**(user.level+2)):
             embed = roll_ticket(user)
             if embed:
                 await ctx.send(embed=embed)
@@ -573,7 +642,14 @@ async def blackjack(ctx, bet: str):
 
         if not game and win:
             # blackjack off the bat
-            user.wallet += int(2.5*bet)
+
+            casino = session.query(Casino).filter_by(id=user.casino).first()
+            tax_rate = get_tax(casino.level)
+            tax_owing = int(tax_rate * 2.5*bet)
+
+            user.wallet += int(2.5*bet - tax_owing)
+            casino.balance += tax_owing
+
             new_embed = discord.Embed(title='Blackjack - Win!', color=discord.Color.green())
             new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=False)
             new_embed.add_field(name=f'Total', value=f"```cs\n{player_score}```", inline=False)
@@ -582,7 +658,7 @@ async def blackjack(ctx, bet: str):
             new_embed.add_field(name="Result",
                 value=f"BLACKJACK! ^.^", inline=False)
             new_embed.add_field(name="Earnings",
-                value=f"```cs\n${int(2.5*bet):,d} Gold```", inline=False)
+                value=f"```cs\n${int(2.5*bet - tax_owing):,d} Gold```", inline=False)
             new_embed.add_field(name="Wallet",
                 value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
             new_embed.set_thumbnail(url='https://icon-library.com/images/blackjack-icon/blackjack-icon-27.jpg')
@@ -665,7 +741,14 @@ async def blackjack(ctx, bet: str):
             win = False
 
         if win:
-            user.wallet += 2*bet
+
+            casino = session.query(Casino).filter_by(id=user.casino).first()
+            tax_rate = get_tax(casino.level)
+            tax_owing = int(tax_rate * 2*bet)
+
+            user.wallet += int(2*bet - tax_owing)
+            casino.balance += tax_owing
+
             new_embed = discord.Embed(title='Blackjack - Win!', color=discord.Color.green())
             new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=False)
             new_embed.add_field(name=f'Total', value=f"```cs\n{player_score}```", inline=False)
@@ -715,6 +798,8 @@ async def highlow(ctx, bet: str):
 
     if not user:
         user = create_user(ctx.author.name)
+
+    check_casino(user)
 
     bet = validate_bet(bet)
 
@@ -834,29 +919,26 @@ async def highlow(ctx, bet: str):
             new_embed.set_footer(text=f"{user.name}", icon_url = ctx.author.avatar_url)
             await message.edit(embed=new_embed)
         else:
-
-            # Wins a ticket
-            ticket = Ticket(
-                user_id=user.id,
-                level=user.level
-            )
-            session.add(ticket)
-            session.commit()
-            ticket_count = session.query(Ticket).filter_by(user_id=user.id).count()
-
             # Winner
-            user.wallet += reward
+            casino = session.query(Casino).filter_by(id=user.casino).first()
+            casino_owner = session.query(User).filter_by(id=casino.user_id).first()
+            tax_rate = get_tax(casino.level)
+            tax_owing = int(tax_rate * reward)
+
+            user.wallet += int(reward - tax_owing)
+            casino.balance += tax_owing
             session.commit()
+
             new_embed = discord.Embed(title='High Low - Winner!', color=discord.Color.green())
             new_embed.add_field(name=f'Your Hand', value=f"{player_cards_display}", inline=False)
             new_embed.add_field(name="Result",
                 value=f"HOLY SHIT YOU WON! ^.^", inline=False)
             new_embed.add_field(name="Earnings",
-                value=f"```cs\n${int(reward):,d} Gold, 1 Ticket```", inline=False)
+                value=f"```cs\n${int(reward):,d} Gold```", inline=False)
+            new_embed.add_field(name=f"Taxes Paid to {casino_owner}",
+                            value=f"```cs\n${tax_owing:,d} Gold```", inline=True)
             new_embed.add_field(name="Wallet",
                 value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
-            new_embed.add_field(name="Tickets",
-                value=f"```cs\n{ticket_count:,d} Tickets```", inline=False)
             new_embed.set_thumbnail(url='https://www.onlineunitedstatescasinos.com/wp-content/uploads/2021/02/Online-Slot-Spinning-Reels-Jackpot-Icon.png')
             new_embed.set_footer(text=f"{user.name}", icon_url = ctx.author.avatar_url)
             await message.edit(embed=new_embed)
@@ -868,6 +950,8 @@ async def rps(ctx, bet: str, rps: str):
 
     if not user:
         user = create_user(ctx.author.name)
+
+    check_casino(user)
 
     bet = validate_bet(bet)
 
@@ -899,7 +983,7 @@ async def rps(ctx, bet: str, rps: str):
     else:
 
         # Roll for the change at a ticket
-        if bet > int(0.5* 10**(user.level+2)):
+        if bet > int(2 * 10**(user.level+2)):
             embed = roll_ticket(user)
             if embed:
                 await ctx.send(embed=embed)
@@ -921,7 +1005,6 @@ async def rps(ctx, bet: str, rps: str):
             win=True
 
         if draw:
-            user.wallet -= bet
             embed = discord.Embed(title='Rock Paper Scissors', color=discord.Color.red())
             embed.add_field(name=f'{ctx.author.display_name}', value="Draw!", inline=False)
             embed.add_field(name="Your Move", value=f"```{rps}```", inline=True)
@@ -931,7 +1014,16 @@ async def rps(ctx, bet: str, rps: str):
             await ctx.send(embed=embed)
 
         elif win:
-            user.wallet += 2*bet
+
+            casino = session.query(Casino).filter_by(id=user.casino).first()
+            casino_owner = session.query(User).filter_by(id=casino.user_id).first()
+            tax_rate = get_tax(casino.level)
+            tax_owing = int(tax_rate * 3*bet)
+
+            user.wallet += int(3*bet - tax_owing)
+            casino.balance += tax_owing
+            session.commit()
+
             embed = discord.Embed(title='Rock Paper Scissors', color=discord.Color.green())
             embed.add_field(name=f'{ctx.author.display_name}', value="You Won ^.^! :thumbsup:", inline=False)
             embed.add_field(name="Your Move", value=f"```{rps}```", inline=True)
@@ -960,15 +1052,22 @@ async def work(ctx):
     if not user:
         user = create_user(ctx.author.name)
         user.wallet += 1000
+        user.last_work=datetime.datetime.now()
+
+        # Entering a casino
+        casino = session.query(Casino).order_by(func.rand()).first()
+        casino_owner = session.query(User).filter_by(user_id=casino.user_id).first()
+        user.casino = casino.id
+        tax_rate = get_tax(casino.level)
+        session.commit()
 
         embed = discord.Embed(title=f'Work Level {user.level}', color=discord.Color.green())
         embed.add_field(name=f'{ctx.author.display_name}', value="You earned $1,000", inline=False)
+        embed.add_field(name=f"Entering {casino_owner.name}'s Casino",
+                        value=f"```cs\n{tax_rate:.1%} Tax```", inline=True)
         embed.add_field(name="Wallet",
                         value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
         await ctx.send(embed=embed)
-
-        user.last_work=datetime.datetime.now()
-        session.commit()
 
     else:
         recent_job = user.last_work
@@ -982,8 +1081,17 @@ async def work(ctx):
         minutes = round(time_delta.total_seconds() / 60,0)
         if minutes > 10:
             user.wallet += earnings
+
+            # Entering a casino
+            casino = session.query(Casino).order_by(func.rand()).first()
+            casino_owner = session.query(User).filter_by(user_id=casino.user_id).first()
+            user.casino = casino.id
+            tax_rate = get_tax(casino.level)
+
             embed = discord.Embed(title=f'Work Level {user.level}', color=discord.Color.green())
             embed.add_field(name=f'{ctx.author.display_name}', value=f"You earned ${earnings:,d}", inline=False)
+            embed.add_field(name=f"Entering {casino_owner.name}'s Casino",
+                        value=f"```cs\n{tax_rate:.1%} Tax```", inline=True)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
             await ctx.send(embed=embed)
@@ -1142,6 +1250,48 @@ async def collect(ctx):
                     value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
     await ctx.send(embed=embed)
 
+@bot.command(name='casino', help='Check or collect from your casino.')
+async def casino(ctx, cmd=None):
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+    
+    if not user:
+        await ctx.send('User not found.')
+    else:
+        casino = session.query(Casino).filter_by(user_id=user.id).first()
+
+        if not casino:
+            casino = create_casino(user)
+
+        members = session.query(User).filter_by(casino=casino.id).all()
+
+        member_names = '\n'.join([member.name for member in members])
+
+        tax_rate = get_tax(casino.level)
+
+        if not cmd:
+            embed = discord.Embed(title=f"{ctx.author.display_name}'s Casino", color=discord.Color.green())
+            embed.add_field(name="Total Earned",
+                            value=f"```cs\n%{casino.balance:,d} Gold```", inline=True)
+            embed.add_field(name="Tax Rate",
+                            value=f"```cs\n{tax_rate:.1%} Tax```", inline=True)
+            embed.add_field(name="Casino Guests",
+                            value=f"```cs\n{member_names}```", inline=True)
+            await ctx.send(embed=embed)
+        
+        elif cmd == 'collect':
+            earnings = casino.balance
+            user.wallet += earnings
+            casino.balance = 0
+            session.commit()
+            embed = discord.Embed(title=f'{user.name} Casino Cashout', color=discord.Color.green())
+            embed.add_field(name=f"Earnings",
+                        value=f"```cs\n${earnings:,d} Gold```", inline=True)
+            embed.add_field(name="Wallet",
+                            value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send("Invalid command. Do .casino or .casino collect")
+
 @bot.command(name='buy', aliases=["shop"], help='Buy some stuff.')
 async def buy(ctx, item=None):
     user = session.query(User).filter_by(name=ctx.author.name).first()
@@ -1150,14 +1300,17 @@ async def buy(ctx, item=None):
         await ctx.send('User not found.')
     else:
         miner = session.query(Miner).filter_by(user_id=user.id).first()
+        casino = session.query(Casino).filter_by(user_id=user.id).first()
         if not item:
             level_up_cost = 10 ** (user.level + 4)
             shield_cost = int(1.5 * (10 ** (user.level + 2)))
             miner_upgrade_cost = 2 * 10 ** (miner.level + 4)
+            casino_upgarde_cost = 10 ** (casino.level + 4)
             embed = discord.Embed(title=f"{ctx.author.display_name}'s Shop", color=discord.Color.random())
             embed.add_field(name='[ID: 1] Shield', value=f"```cs\n${shield_cost:,d} Gold```", inline=False)
             embed.add_field(name='[ID: 2] Level Up', value=f"```cs\n${level_up_cost:,d} Gold```", inline=False)
             embed.add_field(name='[ID: 3] Miner Upgrade', value=f"```cs\n${miner_upgrade_cost:,d} Gold```", inline=False)
+            embed.add_field(name='[ID: 4] Casino Upgrade', value=f"```cs\n${casino_upgarde_cost:,d} Gold```", inline=False)
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
             await ctx.send(embed=embed)
@@ -1202,6 +1355,19 @@ async def buy(ctx, item=None):
                 embed = discord.Embed(title=f"{ctx.author.display_name}'s Miner has leveled up!", color=discord.Color.green())
                 embed.add_field(name="Miner Level",
                                 value=f"```cs\n{str(miner.level)}```", inline=True)
+                await ctx.send(embed=embed)
+
+        elif item == '4':
+            casino_upgarde_cost = 10 ** (casino.level + 4)
+            if user.wallet < casino_upgarde_cost: 
+                await ctx.send('Insufficient Funds in wallet to level up your casino.')
+            else:
+                user.wallet -= casino_upgarde_cost
+                casino.level += 1
+                tax_rate = get_tax(casino.level)
+                embed = discord.Embed(title=f"{ctx.author.display_name}'s Casino has leveled up!", color=discord.Color.green())
+                embed.add_field(name="New Tax Rate",
+                                value=f"```cs\n{tax_rate:.1%} Tax```", inline=True)
                 await ctx.send(embed=embed)
         else:
             await ctx.send('Item not in shop.')
@@ -1647,6 +1813,16 @@ async def commands(ctx):
     await ctx.send(embed=embed)
 
 # Helper Functions
+def create_casino(user):
+    casino = Casino(
+        user_id=user.id,
+        level=0,
+        balance=0
+    )
+    session.add(casino)
+    session.commit()
+
+    return casino
 
 def validate_bet(bet):
     bet = bet.replace('k', '000').replace('K','000').replace('m','000000').replace('M','000000')
@@ -1684,6 +1860,18 @@ def create_user(name):
     session.add(miner)
     session.commit()
 
+    casino = Casino(
+        user_id=user.id,
+        level=0,
+        balance=0
+    )
+    session.add(casino)
+    session.commit()
+
+    user.casino = casino.id
+    session.commit()
+
+
     return user
 
 rps_moves = {
@@ -1699,6 +1887,9 @@ miner_level_urs = {
     4: 'https://i.pinimg.com/originals/6a/10/c7/6a10c7e84c9f4e4aa9412582d28f3fd2.png',
     5: 'https://i.pinimg.com/originals/69/61/ab/6961ab1af799f02df28fa74278d78120.png',
 }
+
+def get_tax(level):
+    return 0.01*level
 
 osrs_gp_url = 'https://oldschool.runescape.wiki/images/Coins_detail.png?404bc'
 
