@@ -448,8 +448,8 @@ async def ticket(ctx, roll=None):
             value=f"```cs\n{ticket_count:,d} Tickets```", inline=False)
         await ctx.send(embed=embed)
     else:
-        await ctx.send("Currently disabled.")
-        return
+        # await ctx.send("Currently disabled.")
+        # return
         if roll == 'roll' and ticket_count > 0:
             ticket = session.query(Ticket).filter_by(user_id=user.id).first()
             dice = random.randint(0,100)
