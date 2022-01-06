@@ -1271,9 +1271,9 @@ async def casino(ctx, cmd=None):
         if not casino:
             casino = create_casino(user)
 
-        members = session.query(User).filter_by(casino=casino.id).all()
+        casino_members = session.query(User).filter_by(casino=casino.id).all()
 
-        member_names = '\n'.join([member.name for member in members])
+        member_names = '\n'.join([member.name for member in casino_members])
 
         tax_rate = get_tax(casino.level)
         
@@ -1284,7 +1284,7 @@ async def casino(ctx, cmd=None):
             embed.add_field(name="Tax Rate",
                             value=f"```cs\n{tax_rate:.0%} Tax```", inline=True)
 
-            if len(members):
+            if len(casino_members):
                 embed.add_field(name="Casino Guests",
                                 value=f"```cs\n{member_names}```", inline=False)
             else:
