@@ -643,7 +643,7 @@ async def flowerpoker(ctx, target_player, bet=None):
                                 value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
                 new_embed.set_thumbnail(url='https://oldschool.runescape.wiki/images/Mounted_coins_built.png?c6984')
                 await message.edit(embed=new_embed)
-                
+
     session.commit()
 
 @bot.command(name='challenge', aliases=["ch"], help='Challenge a player to a roll.')
@@ -1344,9 +1344,9 @@ async def rps(ctx, bet: str, rps: str):
             casino = session.query(Casino).filter_by(id=user.casino).first()
             casino_owner = session.query(User).filter_by(id=casino.user_id).first()
             tax_rate = get_tax(casino.level)
-            tax_owing = int(tax_rate * 3*bet)
+            tax_owing = int(tax_rate * 2*bet)
 
-            user.wallet += int(3*bet - tax_owing)
+            user.wallet += int(2*bet - tax_owing)
             casino.balance += tax_owing
             session.commit()
 
