@@ -1089,10 +1089,10 @@ async def work(ctx):
 
             embed = discord.Embed(title=f'Work Level {user.level}', color=discord.Color.green())
             embed.add_field(name=f'{ctx.author.display_name}', value=f"You earned ${earnings:,d}", inline=False)
-            embed.add_field(name=f"Entering {casino_owner.name}'s Casino",
-                        value=f"```cs\n{tax_rate:.0%} Tax```", inline=True)
             embed.add_field(name="Wallet",
-                            value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
+                            value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+            embed.add_field(name=f"Entering {casino_owner.name}'s Casino",
+                        value=f"```cs\n{tax_rate:.0%} Tax```", inline=False)
             await ctx.send(embed=embed)
             user.last_work = datetime.datetime.now()
         else:
