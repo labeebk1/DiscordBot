@@ -1277,7 +1277,7 @@ async def casino(ctx, cmd=None):
 
         tax_rate = get_tax(casino.level)
         
-        if members:
+        if members or not cmd:
             embed = discord.Embed(title=f"{user.name}'s Casino", color=discord.Color.green())
             embed.add_field(name="Total Earned",
                             value=f"```cs\n${casino.balance:,d} Gold```", inline=True)
