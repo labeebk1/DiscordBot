@@ -805,9 +805,9 @@ def author_check(author):
     return lambda message: message.author == author
 
 def roll_ticket(user: User):
-    roll = random.randint(0,150)
+    roll = random.randint(0,50)
 
-    if roll == 150:
+    if roll == 50:
         # Add a Ticket to the Database
         ticket = Ticket(
             user_id=user.id,
@@ -1344,9 +1344,9 @@ async def rps(ctx, bet: str, rps: str):
             casino = session.query(Casino).filter_by(id=user.casino).first()
             casino_owner = session.query(User).filter_by(id=casino.user_id).first()
             tax_rate = get_tax(casino.level)
-            tax_owing = int(tax_rate * 2*bet)
+            tax_owing = int(tax_rate * bet)
 
-            user.wallet += int(2*bet - tax_owing)
+            user.wallet += int(bet - tax_owing)
             casino.balance += tax_owing
             session.commit()
 
