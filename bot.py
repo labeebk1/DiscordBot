@@ -604,10 +604,10 @@ async def flowerpoker(ctx, target_player, bet=None):
                 new_embed.add_field(name=f"Bot :crown:", value=challenger_hand_display, inline=False)
                 new_embed.add_field(name=f"{user.name} Hand", value=f"```{player_hand_str}```", inline=True)
                 new_embed.add_field(name=f"Bot's Hand", value=f"```{challenger_hand_str}```", inline=True)
-                embed.add_field(name=f"{user.name} Wallet",
+                new_embed.add_field(name=f"{user.name} Wallet",
                                 value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
-                embed.set_thumbnail(url='https://oldschool.runescape.wiki/images/Mounted_coins_built.png?c6984')
-                await message.edit(embed)
+                new_embed.set_thumbnail(url='https://oldschool.runescape.wiki/images/Mounted_coins_built.png?c6984')
+                await message.edit(embed=new_embed)
 
             else:
                 # Draw
