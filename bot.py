@@ -528,7 +528,7 @@ async def flowerpoker(ctx, target_player, bet=None):
                     new_embed.set_thumbnail(url='https://oldschool.runescape.wiki/images/Mounted_coins_built.png?c6984')
                     await message.edit(embed=new_embed)
             else:
-                await ctx.send(f"{challenge_player.name} Rejected the request.")
+                await ctx.send(f"{challenge_player.name} rejected the request.")
         else:
             player_hand = random.choices(flowers, k=5)
             challenger_hand = random.choices(flowers, k=5)
@@ -645,8 +645,6 @@ async def flowerpoker(ctx, target_player, bet=None):
                 await message.edit(embed)
 
     session.commit()
-
-
 
 @bot.command(name='challenge', aliases=["ch"], help='Challenge a player to a roll.')
 async def challenge(ctx, target_player, bet: str):
