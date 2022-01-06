@@ -1253,6 +1253,16 @@ async def collect(ctx):
 async def casino(ctx, cmd=None):
     user = session.query(User).filter_by(name=ctx.author.name).first()
     
+    members = ctx.message.mentions
+    if members:
+        member_name = members[0].name
+
+    # Query if User exists
+    if members:
+        user = session.query(User).filter_by(name=member_name).first()
+    else:
+        user = session.query(User).filter_by(name=ctx.author.name).first()
+
     if not user:
         await ctx.send('User not found.')
     else:
@@ -1266,9 +1276,11 @@ async def casino(ctx, cmd=None):
         member_names = '\n'.join([member.name for member in members])
 
         tax_rate = get_tax(casino.level)
+        
+        import pdb; pdb.set_trace();
 
-        if not cmd:
-            embed = discord.Embed(title=f"{ctx.author.display_name}'s Casino", color=discord.Color.green())
+        if members:
+            embed = discord.Embed(title=f"{user.name}'s Casino", color=discord.Color.green())
             embed.add_field(name="Total Earned",
                             value=f"```cs\n${casino.balance:,d} Gold```", inline=True)
             embed.add_field(name="Tax Rate",
@@ -1282,8 +1294,7 @@ async def casino(ctx, cmd=None):
                                 value=f"```Empty```", inline=False)
 
             await ctx.send(embed=embed)
-        
-        elif cmd == 'collect':
+        elif cmd == 'collect' or cmd == 'coll':
             earnings = casino.balance
             user.wallet += earnings
             casino.balance = 0
