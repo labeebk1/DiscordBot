@@ -438,7 +438,7 @@ async def flowerpoker(ctx, target_player, bet=None):
                         await message.edit(embed=new_embed)
                         await asyncio.sleep(1)
 
-                    new_embed = discord.Embed(title='Flower Poker!', color=discord.Color.green())
+                    new_embed = discord.Embed(title=f'Flower Poker - {user.name} Won!', color=discord.Color.random())
                     new_embed.add_field(name=f"{user.name} :crown:", value=player_hand_display, inline=False)
                     new_embed.add_field(name=f"{challenge_player.name}", value=challenger_hand_display, inline=False)
                     new_embed.add_field(name=f"{user.name} Hand", value=f"```{player_hand_str}```", inline=True)
@@ -477,7 +477,7 @@ async def flowerpoker(ctx, target_player, bet=None):
                         await message.edit(embed=new_embed)
                         await asyncio.sleep(1)
 
-                    new_embed = discord.Embed(title='Flower Poker!', color=discord.Color.green())
+                    new_embed = discord.Embed(title=f'Flower Poker - {challenge_player.name} Won!', color=discord.Color.random())
                     new_embed.add_field(name=f"{user.name}", value=player_hand_display, inline=False)
                     new_embed.add_field(name=f"{challenge_player.name} :crown:", value=challenger_hand_display, inline=False)
                     new_embed.add_field(name=f"{user.name} Hand", value=f"```{player_hand_str}```", inline=True)
@@ -516,7 +516,7 @@ async def flowerpoker(ctx, target_player, bet=None):
                         await message.edit(embed=new_embed)
                         await asyncio.sleep(1)
 
-                    new_embed = discord.Embed(title='Flower Poker - Draw!', color=discord.Color.green())
+                    new_embed = discord.Embed(title='Flower Poker - Draw!', color=discord.Color.random())
                     new_embed.add_field(name=f"{user.name}", value=player_hand_display, inline=False)
                     new_embed.add_field(name=f"{challenge_player.name}", value=challenger_hand_display, inline=False)
                     new_embed.add_field(name=f"{user.name} Hand", value=f"```{player_hand_str}```", inline=True)
@@ -528,7 +528,7 @@ async def flowerpoker(ctx, target_player, bet=None):
                     new_embed.set_thumbnail(url='https://oldschool.runescape.wiki/images/Mounted_coins_built.png?c6984')
                     await message.edit(embed=new_embed)
             else:
-                await ctx.send(f"No response by {challenge_player.name}")
+                await ctx.send(f"{challenge_player.name} Rejected the request.")
         else:
             player_hand = random.choices(flowers, k=5)
             challenger_hand = random.choices(flowers, k=5)
