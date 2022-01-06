@@ -319,6 +319,335 @@ async def roulette(ctx, bet: str, color: str):
 
     session.commit()
 
+def get_hand_value(hand):
+    # rankings: 
+    # 0 = Nothing, 
+    # 1 = 2 of a kind, 
+    # 2 = 2 pair
+    # 3 = 3 of a kind, 
+    # 4 = Full house, 
+    # 5 = 4 of a kind, 
+    # 6 = 5 of a kind
+    counts = dict()
+    for i in hand:
+        counts[i] = counts.get(i, 0) + 1
+
+    hand_vals = list(counts.values())
+    if max(hand_vals) == 1:
+        return 0, 'Nothing'
+    # Full house
+    elif 3 in hand_vals and 2 in hand_vals:
+        return 4, 'Full House!'
+    # 5 of a kind
+    elif len(hand_vals) == 1:
+        return 6, '5 of a Kind!!'
+    elif max(hand_vals) == 4:
+        return 5, '4 of a Kind!'
+    elif max(hand_vals) == 3:
+        return 3, '3 of a Kind!'
+
+    pairs = hand_vals.count(2)
+    if pairs == 2:
+        return 2, '2 Pair!'
+    else:
+        return 1, 'Pair!'
+
+@bot.command(name='flowerpoker', aliases=["fp"], help='Challenge a player or the host to a game of flower poker.')
+async def flowerpoker(ctx, target_player, bet=None):
+    # Query if User exists
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+
+    members = ctx.message.mentions
+    if members:
+        member = members[0]
+        member_name = members[0].name
+
+    if members:
+        challenge_player = session.query(User).filter_by(name=member_name).first()
+        if not challenge_player:
+            await ctx.send("User does not exist.")
+            return
+
+    if not user:
+        await ctx.send("User does not exist.")
+        return
+
+    if not bet:
+        bet = target_player
+    bet_str = bet
+    bet = validate_bet(bet)
+
+    if not bet:
+        await ctx.send("Invalid bet. Format's Available: 1, 1k, 1K, 1m, 1M")
+        return
+
+    if user.wallet < bet:
+        await ctx.send("Insufficient funds to make this challenge.")
+
+    elif members and challenge_player.wallet < bet:
+        await ctx.send(f"{challenge_player.name} is broke af.")
+
+    else:
+        if members:
+            embed = discord.Embed(title=f'Challenging {challenge_player.name} to Flower Poker', color=discord.Color.random())
+            embed.add_field(name=f'{ctx.author.display_name} has challenged you to a game of flower poker for ${bet_str} Gold.', value="Type 'yes' or 'y' to accept.", inline=False)
+            embed.set_thumbnail(url='https://oldschool.runescape.wiki/images/thumb/Assorted_flowers_detail.png/1024px-Assorted_flowers_detail.png?14110')
+            message = await ctx.send(embed=embed)
+
+            reply = await bot.wait_for(event="message", check=author_check(member), timeout=30.0)
+            
+            if reply.content in ['yes', 'y']:
+                
+                user.wallet -= bet
+                challenge_player.wallet -= bet
+                session.commit()
+                
+                player_hand = random.choices(flowers, k=5)
+                challenger_hand = random.choices(flowers, k=5)
+
+                player_hand_display = ' '.join(player_hand)
+                challenger_hand_display = ' '.join(challenger_hand)
+
+                player_hand_value, player_hand_str = get_hand_value(player_hand)
+                challenger_hand_value, challenger_hand_str = get_hand_value(challenger_hand)
+
+                if player_hand_value > challenger_hand_value:
+                    # Player Won
+                    user.wallet += 2*bet
+                    
+                    player_slow_display = [player_hand.pop()]
+                    challenger_slow_display = [challenger_hand.pop()]
+                    player_hand_display = ' '.join(player_slow_display)
+                    challenger_hand_display = ' '.join(challenger_slow_display)
+
+                    embed = discord.Embed(title='Flower Poker!', color=discord.Color.random())
+                    embed.add_field(name=f"{user.name}", value=player_hand_display, inline=False)
+                    embed.add_field(name=f"{challenge_player.name}", value=challenger_hand_display, inline=False)
+                    message = await ctx.send(embed=embed)
+                    await asyncio.sleep(1)
+
+                    while len(player_hand):
+                        player_slow_display.append(player_hand.pop())
+                        challenger_slow_display.append(challenger_hand.pop())
+                        player_hand_display = ' '.join(player_slow_display)
+                        challenger_hand_display = ' '.join(challenger_slow_display)
+
+                        new_embed = discord.Embed(title='Flower Poker!', color=discord.Color.random())
+                        new_embed.add_field(name=f"{user.name}", value=player_hand_display, inline=False)
+                        new_embed.add_field(name=f"{challenge_player.name}", value=challenger_hand_display, inline=False)
+                        await message.edit(embed=new_embed)
+                        await asyncio.sleep(1)
+
+                    new_embed = discord.Embed(title='Flower Poker!', color=discord.Color.green())
+                    new_embed.add_field(name=f"{user.name} :crown:", value=player_hand_display, inline=False)
+                    new_embed.add_field(name=f"{challenge_player.name}", value=challenger_hand_display, inline=False)
+                    new_embed.add_field(name=f"{user.name} Hand", value=f"```{player_hand_str}```", inline=True)
+                    new_embed.add_field(name=f"{challenge_player.name}'s Hand", value=f"```{challenger_hand_str}```", inline=True)
+                    new_embed.add_field(name=f"{user.name} Wallet",
+                                    value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+                    new_embed.add_field(name=f"{challenge_player.name} Wallet",
+                                    value=f"```cs\n${challenge_player.wallet:,d} Gold```", inline=False)
+                    new_embed.set_thumbnail(url='https://oldschool.runescape.wiki/images/Mounted_coins_built.png?c6984')
+                    await message.edit(embed=new_embed)
+
+                elif challenger_hand_value > player_hand_value:
+                    # Receipient won
+                    challenge_player.wallet += 2*bet
+
+                    player_slow_display = [player_hand.pop()]
+                    challenger_slow_display = [challenger_hand.pop()]
+                    player_hand_display = ' '.join(player_slow_display)
+                    challenger_hand_display = ' '.join(challenger_slow_display)
+
+                    embed = discord.Embed(title='Flower Poker!', color=discord.Color.random())
+                    embed.add_field(name=f"{user.name}", value=player_hand_display, inline=False)
+                    embed.add_field(name=f"{challenge_player.name}", value=challenger_hand_display, inline=False)
+                    message = await ctx.send(embed=embed)
+                    await asyncio.sleep(1)
+
+                    while len(player_hand):
+                        player_slow_display.append(player_hand.pop())
+                        challenger_slow_display.append(challenger_hand.pop())
+                        player_hand_display = ' '.join(player_slow_display)
+                        challenger_hand_display = ' '.join(challenger_slow_display)
+
+                        new_embed = discord.Embed(title='Flower Poker!', color=discord.Color.random())
+                        new_embed.add_field(name=f"{user.name}", value=player_hand_display, inline=False)
+                        new_embed.add_field(name=f"{challenge_player.name}", value=challenger_hand_display, inline=False)
+                        await message.edit(embed=new_embed)
+                        await asyncio.sleep(1)
+
+                    new_embed = discord.Embed(title='Flower Poker!', color=discord.Color.green())
+                    new_embed.add_field(name=f"{user.name}", value=player_hand_display, inline=False)
+                    new_embed.add_field(name=f"{challenge_player.name} :crown:", value=challenger_hand_display, inline=False)
+                    new_embed.add_field(name=f"{user.name} Hand", value=f"```{player_hand_str}```", inline=True)
+                    new_embed.add_field(name=f"{challenge_player.name}'s Hand", value=f"```{challenger_hand_str}```", inline=True)
+                    new_embed.add_field(name=f"{user.name} Wallet",
+                                    value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+                    new_embed.add_field(name=f"{challenge_player.name} Wallet",
+                                    value=f"```cs\n${challenge_player.wallet:,d} Gold```", inline=False)
+                    new_embed.set_thumbnail(url='https://oldschool.runescape.wiki/images/Mounted_coins_built.png?c6984')
+                    await message.edit(embed=new_embed)
+
+                else:
+                    # Draw
+                    user.wallet += bet
+                    challenge_player.wallet += bet
+                    player_slow_display = [player_hand.pop()]
+                    challenger_slow_display = [challenger_hand.pop()]
+                    player_hand_display = ' '.join(player_slow_display)
+                    challenger_hand_display = ' '.join(challenger_slow_display)
+
+                    embed = discord.Embed(title='Flower Poker!', color=discord.Color.random())
+                    embed.add_field(name=f"{user.name}", value=player_hand_display, inline=False)
+                    embed.add_field(name=f"{challenge_player.name}", value=challenger_hand_display, inline=False)
+                    message = await ctx.send(embed=embed)
+                    await asyncio.sleep(1)
+
+                    while len(player_hand):
+                        player_slow_display.append(player_hand.pop())
+                        challenger_slow_display.append(challenger_hand.pop())
+                        player_hand_display = ' '.join(player_slow_display)
+                        challenger_hand_display = ' '.join(challenger_slow_display)
+
+                        new_embed = discord.Embed(title='Flower Poker!', color=discord.Color.random())
+                        new_embed.add_field(name=f"{user.name}", value=player_hand_display, inline=False)
+                        new_embed.add_field(name=f"{challenge_player.name}", value=challenger_hand_display, inline=False)
+                        await message.edit(embed=new_embed)
+                        await asyncio.sleep(1)
+
+                    new_embed = discord.Embed(title='Flower Poker - Draw!', color=discord.Color.green())
+                    new_embed.add_field(name=f"{user.name}", value=player_hand_display, inline=False)
+                    new_embed.add_field(name=f"{challenge_player.name}", value=challenger_hand_display, inline=False)
+                    new_embed.add_field(name=f"{user.name} Hand", value=f"```{player_hand_str}```", inline=True)
+                    new_embed.add_field(name=f"{challenge_player.name}'s Hand", value=f"```{challenger_hand_str}```", inline=True)
+                    new_embed.add_field(name=f"{user.name} Wallet",
+                                    value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+                    new_embed.add_field(name=f"{challenge_player.name} Wallet",
+                                    value=f"```cs\n${challenge_player.wallet:,d} Gold```", inline=False)
+                    new_embed.set_thumbnail(url='https://oldschool.runescape.wiki/images/Mounted_coins_built.png?c6984')
+                    await message.edit(embed=new_embed)
+            else:
+                await ctx.send(f"No response by {challenge_player.name}")
+        else:
+            player_hand = random.choices(flowers, k=5)
+            challenger_hand = random.choices(flowers, k=5)
+
+            player_hand_value, player_hand_str = get_hand_value(player_hand)
+            challenger_hand_value, challenger_hand_str = get_hand_value(challenger_hand)
+
+            if player_hand_value > challenger_hand_value:
+                # Player Won
+                user.wallet += bet
+                
+                player_slow_display = [player_hand.pop()]
+                challenger_slow_display = [challenger_hand.pop()]
+                player_hand_display = ' '.join(player_slow_display)
+                challenger_hand_display = ' '.join(challenger_slow_display)
+
+                embed = discord.Embed(title='Flower Poker!', color=discord.Color.random())
+                embed.add_field(name=f"{user.name}", value=player_hand_display, inline=False)
+                embed.add_field(name=f"Bot", value=challenger_hand_display, inline=False)
+                message = await ctx.send(embed=embed)
+                await asyncio.sleep(1)
+
+                while len(player_hand):
+                    player_slow_display.append(player_hand.pop())
+                    challenger_slow_display.append(challenger_hand.pop())
+                    player_hand_display = ' '.join(player_slow_display)
+                    challenger_hand_display = ' '.join(challenger_slow_display)
+
+                    new_embed = discord.Embed(title='Flower Poker!', color=discord.Color.random())
+                    new_embed.add_field(name=f"{user.name}", value=player_hand_display, inline=False)
+                    new_embed.add_field(name=f"Bot", value=challenger_hand_display, inline=False)
+                    await message.edit(embed=new_embed)
+                    await asyncio.sleep(1)
+
+                new_embed = discord.Embed(title='Flower Poker - You Win!', color=discord.Color.green())
+                new_embed.add_field(name=f"{user.name} :crown:", value=player_hand_display, inline=False)
+                new_embed.add_field(name=f"Bot", value=challenger_hand_display, inline=False)
+                new_embed.add_field(name=f"{user.name} Hand", value=f"```{player_hand_str}```", inline=True)
+                new_embed.add_field(name=f"Bot's Hand", value=f"```{challenger_hand_str}```", inline=True)
+                new_embed.add_field(name=f"{user.name} Wallet",
+                                value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+                new_embed.set_thumbnail(url='https://oldschool.runescape.wiki/images/Mounted_coins_built.png?c6984')
+                await message.edit(embed=new_embed)
+
+            elif challenger_hand_value > player_hand_value:
+                user.wallet -= bet
+                # Bot won
+                player_slow_display = [player_hand.pop()]
+                challenger_slow_display = [challenger_hand.pop()]
+                player_hand_display = ' '.join(player_slow_display)
+                challenger_hand_display = ' '.join(challenger_slow_display)
+
+                embed = discord.Embed(title='Flower Poker!', color=discord.Color.random())
+                embed.add_field(name=f"{user.name}", value=player_hand_display, inline=False)
+                embed.add_field(name=f"Bot", value=challenger_hand_display, inline=False)
+                message = await ctx.send(embed=embed)
+                await asyncio.sleep(1)
+
+                while len(player_hand):
+                    player_slow_display.append(player_hand.pop())
+                    challenger_slow_display.append(challenger_hand.pop())
+                    player_hand_display = ' '.join(player_slow_display)
+                    challenger_hand_display = ' '.join(challenger_slow_display)
+
+                    new_embed = discord.Embed(title='Flower Poker!', color=discord.Color.random())
+                    new_embed.add_field(name=f"{user.name}", value=player_hand_display, inline=False)
+                    new_embed.add_field(name=f"Bot", value=challenger_hand_display, inline=False)
+                    await message.edit(embed=new_embed)
+                    await asyncio.sleep(1)
+
+                new_embed = discord.Embed(title='Flower Poker - You Lose!', color=discord.Color.red())
+                new_embed.add_field(name=f"{user.name}", value=player_hand_display, inline=False)
+                new_embed.add_field(name=f"Bot :crown:", value=challenger_hand_display, inline=False)
+                new_embed.add_field(name=f"{user.name} Hand", value=f"```{player_hand_str}```", inline=True)
+                new_embed.add_field(name=f"Bot's Hand", value=f"```{challenger_hand_str}```", inline=True)
+                embed.add_field(name=f"{user.name} Wallet",
+                                value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+                embed.set_thumbnail(url='https://oldschool.runescape.wiki/images/Mounted_coins_built.png?c6984')
+                await message.edit(embed)
+
+            else:
+                # Draw
+                player_slow_display = [player_hand.pop()]
+                challenger_slow_display = [challenger_hand.pop()]
+                player_hand_display = ' '.join(player_slow_display)
+                challenger_hand_display = ' '.join(challenger_slow_display)
+
+                embed = discord.Embed(title='Flower Poker!', color=discord.Color.random())
+                embed.add_field(name=f"{user.name}", value=player_hand_display, inline=False)
+                embed.add_field(name=f"Bot", value=challenger_hand_display, inline=False)
+                message = await ctx.send(embed=embed)
+                await asyncio.sleep(1)
+
+                while len(player_hand):
+                    player_slow_display.append(player_hand.pop())
+                    challenger_slow_display.append(challenger_hand.pop())
+                    player_hand_display = ' '.join(player_slow_display)
+                    challenger_hand_display = ' '.join(challenger_slow_display)
+
+                    new_embed = discord.Embed(title='Flower Poker!', color=discord.Color.random())
+                    new_embed.add_field(name=f"{user.name}", value=player_hand_display, inline=False)
+                    new_embed.add_field(name=f"Bot", value=challenger_hand_display, inline=False)
+                    await message.edit(embed=new_embed)
+                    await asyncio.sleep(1)
+
+                new_embed = discord.Embed(title='Flower Poker - Draw!', color=discord.Color.random())
+                new_embed.add_field(name=f"{user.name}", value=player_hand_display, inline=False)
+                new_embed.add_field(name=f"Bot", value=challenger_hand_display, inline=False)
+                new_embed.add_field(name=f"{user.name} Hand", value=f"```{player_hand_str}```", inline=True)
+                new_embed.add_field(name=f"Bot's Hand", value=f"```{challenger_hand_str}```", inline=True)
+                embed.add_field(name=f"{user.name} Wallet",
+                                value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+                embed.set_thumbnail(url='https://oldschool.runescape.wiki/images/Mounted_coins_built.png?c6984')
+                await message.edit(embed)
+
+    session.commit()
+
+
+
 @bot.command(name='challenge', aliases=["ch"], help='Challenge a player to a roll.')
 async def challenge(ctx, target_player, bet: str):
     # Query if User exists
@@ -1821,6 +2150,7 @@ async def commands(ctx):
     embed.add_field(name="rob", value="Rob the shit out of a player. Format: .rob @Player", inline=False)
     embed.add_field(name="steal", value="Steal the diamond from the diamond holder. Format: .steal @Player", inline=False)
     embed.add_field(name="challenge", value="Challenge a player to a roll. Format: .challenge @Player Amount", inline=False)
+    embed.add_field(name="flowerpoker", value="Challenge a player to flower poker. Format: .challenge @Player Amount or .challenge Amount", inline=False)
     embed.add_field(name="work", value="Work for some money. Level up to get more money.", inline=False)
     embed.add_field(name="hourly", value="Make money every hour.", inline=False)
     embed.add_field(name="miner", value="Check the status of your miner.", inline=False)
@@ -1904,6 +2234,18 @@ miner_level_urs = {
     4: 'https://i.pinimg.com/originals/6a/10/c7/6a10c7e84c9f4e4aa9412582d28f3fd2.png',
     5: 'https://i.pinimg.com/originals/69/61/ab/6961ab1af799f02df28fa74278d78120.png',
 }
+
+flowers = [
+    '<:assorted_flowers:928494518658007110>',
+    # '<:black_flowers:928494671041277963>',
+    '<:blue_flowers:928494731489574923>',
+    '<:orange_flowers:928494782127419394>',
+    '<:mixed_flowers:928494829132980315>',
+    '<:purple_flowers:928494904554975273>',
+    '<:red_flowers:928494952642670673>',
+    # '<:white_flowers:928494995537817631>',
+    '<:yellow_flowers:928495038248402945>'
+]
 
 def get_tax(level):
     return 0.02*(level+1)
