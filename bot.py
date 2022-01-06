@@ -1859,6 +1859,74 @@ async def setlevel(ctx, tagged_user, amount):
 
     session.commit()
 
+
+@bot.command(name='setcasinolevel', help='Admin command only.')
+async def setcasinolevel(ctx, tagged_user, amount):
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+    
+    amount = validate_bet(amount)
+
+    if not amount:
+        await ctx.send('Invalid amount to send.')
+    
+    members = ctx.message.mentions
+    if members:
+        member_name = members[0].name
+
+    if not members:
+        await ctx.send('You must tag someone to send money to them.')
+
+    recipient = session.query(User).filter_by(name=member_name).first()
+
+    if not recipient:
+        await ctx.send('User does not exist. They must create an account by typing !bal')
+    
+    if user.name == 'Koltzan':
+        embed = discord.Embed(title=f"Casino Level Set for {recipient.name}", color=discord.Color.green())
+        casino = session.query(Casino).filter_by(user_id=recipient.id).first()
+        casino.level = amount
+        embed.add_field(name=f"{recipient.name}'s' Level",
+                        value=f"```cs\n{casino.level:,d}```", inline=True)
+        await ctx.send(embed=embed)
+    else:
+        await ctx.send("Admin command only")
+
+    session.commit()
+
+@bot.command(name='setminerlevel', help='Admin command only.')
+async def setminerlevel(ctx, tagged_user, amount):
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+    
+    amount = validate_bet(amount)
+
+    if not amount:
+        await ctx.send('Invalid amount to send.')
+    
+    members = ctx.message.mentions
+    if members:
+        member_name = members[0].name
+
+    if not members:
+        await ctx.send('You must tag someone to send money to them.')
+
+    recipient = session.query(User).filter_by(name=member_name).first()
+
+    if not recipient:
+        await ctx.send('User does not exist. They must create an account by typing !bal')
+    
+    if user.name == 'Koltzan':
+        embed = discord.Embed(title=f"Miner Level Set for {recipient.name}", color=discord.Color.green())
+        miner = session.query(Miner).filter_by(user_id=recipient.id).first()
+        miner.level = amount
+        embed.add_field(name=f"{recipient.name}'s' Level",
+                        value=f"```cs\n{miner.level:,d}```", inline=True)
+        await ctx.send(embed=embed)
+    else:
+        await ctx.send("Admin command only")
+
+    session.commit()
+
+
 @bot.command(name='givediamond', help='Admin command only.')
 async def givediamond(ctx, tagged_user):
     user = session.query(User).filter_by(name=ctx.author.name).first()
