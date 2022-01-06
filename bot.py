@@ -1277,8 +1277,6 @@ async def casino(ctx, cmd=None):
 
         tax_rate = get_tax(casino.level)
         
-        import pdb; pdb.set_trace();
-
         if members:
             embed = discord.Embed(title=f"{user.name}'s Casino", color=discord.Color.green())
             embed.add_field(name="Total Earned",
