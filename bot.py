@@ -80,6 +80,58 @@ async def balance(ctx):
     else:
         await ctx.send('User not found.')
 
+@bot.command(name='stats', help='Check your stats.')
+async def stats(ctx):
+    
+    members = ctx.message.mentions
+    if members:
+        member = members[0]
+        member_name = members[0].name
+
+    # Query if User exists
+    if members:
+        user = session.query(User).filter_by(name=member_name).first()
+    else:
+        user = session.query(User).filter_by(name=ctx.author.name).first()
+
+    if not user and not members:
+        user = create_user(ctx.author.name)
+
+    casino = session.query(Casino).filter_by(user_id=user.id).first()
+    if not casino:
+        casino = create_casino(user)
+
+    miner = session.query(Miner).filter_by(user_id=user.id).first()
+    
+    if not user.casino:
+        user.casino = casino.id
+
+    if user:
+        if user.diamond == True:
+            embed = discord.Embed(title=f"King {user.name} :diamond_shape_with_a_dot_inside:", 
+                        color=discord.Color.random())
+        else:            
+            embed = discord.Embed(title=f"{user.name}'s Bank", 
+                        color=discord.Color.random())
+
+        if members:
+            embed.set_thumbnail(url=member.avatar_url)
+        else:
+            embed.set_thumbnail(url=ctx.author.avatar_url)
+
+        embed.add_field(name="User Level",
+                        value=f"```cs\n{str(user.level)}```", inline=True)
+        embed.add_field(name="Miner Level",
+                        value=f"```cs\n{miner.level:,d}```", inline=True)
+        embed.add_field(name="Casino Level",
+                        value=f"```cs\n{casino.level:,d}```", inline=True)
+
+        embed.set_footer(text=f"{user.shields} Active Shields", icon_url = "https://thumbs.dreamstime.com/b/well-organized-fully-editable-antivirus-protection-security-icon-any-use-like-print-media-web-commercial-use-any-kind-158454387.jpg")
+
+        await ctx.send(embed=embed)
+    else:
+        await ctx.send('User not found.')
+
 @bot.command(name='flip', aliases=["f"], help='Do a 50-50 to double your money.')
 async def flip(ctx, bet: str):
     # Query if User exists
@@ -1859,7 +1911,6 @@ async def setlevel(ctx, tagged_user, amount):
 
     session.commit()
 
-
 @bot.command(name='setcasinolevel', help='Admin command only.')
 async def setcasinolevel(ctx, tagged_user, amount):
     user = session.query(User).filter_by(name=ctx.author.name).first()
@@ -1925,7 +1976,6 @@ async def setminerlevel(ctx, tagged_user, amount):
         await ctx.send("Admin command only")
 
     session.commit()
-
 
 @bot.command(name='givediamond', help='Admin command only.')
 async def givediamond(ctx, tagged_user):
