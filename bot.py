@@ -107,12 +107,7 @@ async def stats(ctx):
         user.casino = casino.id
 
     if user:
-        if user.diamond == True:
-            embed = discord.Embed(title=f"King {user.name} :diamond_shape_with_a_dot_inside:", 
-                        color=discord.Color.random())
-        else:            
-            embed = discord.Embed(title=f"{user.name}'s Bank", 
-                        color=discord.Color.random())
+        embed = discord.Embed(title=f"{user.name}'s Profile", color=discord.Color.random())
 
         if members:
             embed.set_thumbnail(url=member.avatar_url)
