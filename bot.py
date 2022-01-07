@@ -1696,7 +1696,7 @@ async def buy(ctx, item=None):
             level_up_cost = 10 ** (user.level + 4)
             shield_cost = int(1.5 * (10 ** (user.level + 2)))
             miner_upgrade_cost = 2 * 10 ** (miner.level + 4)
-            casino_upgarde_cost = 10 ** (casino.level + 5)
+            casino_upgarde_cost = 10 ** (casino.level + 4)
             embed = discord.Embed(title=f"{ctx.author.display_name}'s Shop", color=discord.Color.random())
             embed.add_field(name='[ID: 1] Shield', value=f"```cs\n${shield_cost:,d} Gold```", inline=False)
             embed.add_field(name='[ID: 2] Level Up', value=f"```cs\n${level_up_cost:,d} Gold```", inline=False)
@@ -1749,7 +1749,7 @@ async def buy(ctx, item=None):
                 await ctx.send(embed=embed)
 
         elif item == '4':
-            casino_upgarde_cost = 10 ** (casino.level + 5)
+            casino_upgarde_cost = 10 ** (casino.level + 4)
             if user.wallet < casino_upgarde_cost: 
                 await ctx.send('Insufficient Funds in wallet to level up your casino.')
             else:
@@ -2274,7 +2274,7 @@ async def commands(ctx):
 def create_casino(user):
     casino = Casino(
         user_id=user.id,
-        level=0,
+        level=1,
         balance=0
     )
     session.add(casino)
@@ -2320,7 +2320,7 @@ def create_user(name):
 
     casino = Casino(
         user_id=user.id,
-        level=0,
+        level=1,
         balance=0
     )
     session.add(casino)
@@ -2359,7 +2359,7 @@ flowers = [
 ]
 
 def get_tax(level):
-    return 0.02*(level+1)
+    return 0.02*(level)
 
 osrs_gp_url = 'https://oldschool.runescape.wiki/images/Coins_detail.png?404bc'
 
