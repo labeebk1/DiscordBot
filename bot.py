@@ -1441,6 +1441,7 @@ async def bottle(ctx, target_player, bet: str):
                         await message.edit(embed=new_embed)
                         session.commit()
                         game = False
+                        break
                     
                 new_embed = discord.Embed(title='Bottle Game', color=discord.Color.random())
                 new_embed.add_field(name=f"{user.name} Balance",
@@ -1477,7 +1478,8 @@ async def bottle(ctx, target_player, bet: str):
                         await message.edit(embed=new_embed)
                         session.commit()
                         game = False
-
+                        break
+                    
                 new_embed = discord.Embed(title='Bottle Game', color=discord.Color.random())
                 new_embed.add_field(name=f"{user.name} Balance",
                                 value=f"```{100}```", inline=True)
