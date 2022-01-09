@@ -1422,7 +1422,7 @@ async def bottle(ctx, target_player, bet: str):
                     player_bet = 0
                 else:
                     player_reply = await bot.wait_for(event="message", check=author_check(ctx.author), timeout=30.0)
-                    while not player_reply.content.isnumeric():
+                    while not player_reply.content.isnumeric() or int(player_reply.content) < 0 or int(player_reply.content) > player_balance:
                         await ctx.send(f"Invalid Response. Please bet a number between 0 and {player_balance}")
                         player_reply = await bot.wait_for(event="message", check=author_check(ctx.author), timeout=30.0)
                     player_bet = int(player_reply.content)
@@ -1459,7 +1459,7 @@ async def bottle(ctx, target_player, bet: str):
                     challenge_player_bet = 0
                 else:
                     challenge_player_reply = await bot.wait_for(event="message", check=author_check(member), timeout=30.0)
-                    while not challenge_player_reply.content.isnumeric():
+                    while not challenge_player_reply.content.isnumeric() or int(challenge_player_reply.content) < 0 or int(challenge_player_reply.content) > player_balance:
                         await ctx.send(f"Invalid Response. Please bet a number between 0 and {challenge_player_balance}")
                         challenge_player_reply = await bot.wait_for(event="message", check=author_check(member), timeout=30.0)
                     challenge_player_bet = int(challenge_player_reply.content)
