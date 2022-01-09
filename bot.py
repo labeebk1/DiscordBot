@@ -1424,7 +1424,6 @@ async def bottle(ctx, target_player, bet: str):
                     player_reply = await bot.wait_for(event="message", check=author_check(ctx.author), timeout=30.0)
 
                 player_bet = int(player_reply.content)
-                import pdb; pdb.set_trace();
                 if not player_reply.channel.type == discord.ChannelType.private:
                     await player_reply.delete()
                 
