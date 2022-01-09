@@ -1416,17 +1416,32 @@ async def bottle(ctx, target_player, bet: str):
 
                 if not game:
                     break
-
-                player_reply = await bot.wait_for(event="message", check=author_check(ctx.author), timeout=30.0)
                 
-                while not player_reply.content.isnumeric():
-                    await ctx.send(f"Invalid Response. Please bet a number between 0 and {player_balance}")
+                # Player bets
+                if player_balance == 0:
+                    player_bet = 0
+                else:
                     player_reply = await bot.wait_for(event="message", check=author_check(ctx.author), timeout=30.0)
+                    while not player_reply.content.isnumeric():
+                        await ctx.send(f"Invalid Response. Please bet a number between 0 and {player_balance}")
+                        player_reply = await bot.wait_for(event="message", check=author_check(ctx.author), timeout=30.0)
+                    player_bet = int(player_reply.content)
+                    if not player_reply.channel.type == discord.ChannelType.private:
+                        await player_reply.delete()
 
-                player_bet = int(player_reply.content)
-                if not player_reply.channel.type == discord.ChannelType.private:
-                    await player_reply.delete()
-                
+                    # If user does not reply
+                    if player_reply is None:
+                        challenge_player.wallet += 2*bet
+                        new_embed = discord.Embed(title='Bottle Game', color=discord.Color.random())
+                        new_embed.add_field(name=f'{challenge_player.name} Won due to {user.name} timing out!', value=f"Good game.", inline=False)
+                        new_embed.add_field(name=f"{user.name} Wallet",
+                                        value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+                        new_embed.add_field(name=f"{challenge_player.name} Wallet",
+                                        value=f"```cs\n${challenge_player.wallet:,d} Gold```", inline=False)
+                        await message.edit(embed=new_embed)
+                        session.commit()
+                        game = False
+                    
                 new_embed = discord.Embed(title='Bottle Game', color=discord.Color.random())
                 new_embed.add_field(name=f"{user.name} Balance",
                                 value=f"```{player_balance}```", inline=True)
@@ -1438,14 +1453,30 @@ async def bottle(ctx, target_player, bet: str):
                                 value=f"{user.name} has placed their bet. \n{challenge_player.name} needs to make a bet.", inline=False)
                 await message.edit(embed=new_embed)
                 
-                challenge_player_reply = await bot.wait_for(event="message", check=author_check(member), timeout=30.0)
-                while not challenge_player_reply.content.isnumeric():
-                    await ctx.send(f"Invalid Response. Please bet a number between 0 and {challenge_player_balance}")
+                # Challenger bets
+                if challenge_player_balance == 0:
+                    challenge_player_bet = 0
+                else:
                     challenge_player_reply = await bot.wait_for(event="message", check=author_check(member), timeout=30.0)
-                
-                challenge_player_bet = int(challenge_player_reply.content)
-                if not challenge_player_reply.channel.type == discord.ChannelType.private:
-                    await challenge_player_reply.delete()
+                    while not challenge_player_reply.content.isnumeric():
+                        await ctx.send(f"Invalid Response. Please bet a number between 0 and {challenge_player_balance}")
+                        challenge_player_reply = await bot.wait_for(event="message", check=author_check(member), timeout=30.0)
+                    challenge_player_bet = int(challenge_player_reply.content)
+                    if not challenge_player_reply.channel.type == discord.ChannelType.private:
+                        await challenge_player_reply.delete()
+                    
+                    # If Challenger does not reply
+                    if challenge_player_reply is None:
+                        user.wallet += 2*bet
+                        new_embed = discord.Embed(title='Bottle Game', color=discord.Color.random())
+                        new_embed.add_field(name=f'{user.name} Won due to {challenge_player.name} timing out!', value=f"Good game.", inline=False)
+                        new_embed.add_field(name=f"{user.name} Wallet",
+                                        value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+                        new_embed.add_field(name=f"{challenge_player.name} Wallet",
+                                        value=f"```cs\n${challenge_player.wallet:,d} Gold```", inline=False)
+                        await message.edit(embed=new_embed)
+                        session.commit()
+                        game = False
 
                 new_embed = discord.Embed(title='Bottle Game', color=discord.Color.random())
                 new_embed.add_field(name=f"{user.name} Balance",
