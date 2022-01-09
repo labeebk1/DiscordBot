@@ -1424,7 +1424,8 @@ async def bottle(ctx, target_player, bet: str):
                     player_reply = await bot.wait_for(event="message", check=author_check(ctx.author), timeout=30.0)
 
                 player_bet = int(player_reply.content)
-                if not player_reply.channel.type == 'dm':
+                import pdb; pdb.set_trace();
+                if not player_reply.channel.type == discord.ChannelType.private:
                     await player_reply.delete()
                 
                 new_embed = discord.Embed(title='Bottle Game', color=discord.Color.random())
@@ -1444,7 +1445,7 @@ async def bottle(ctx, target_player, bet: str):
                     challenge_player_reply = await bot.wait_for(event="message", check=author_check(member), timeout=30.0)
                 
                 challenge_player_bet = int(challenge_player_reply.content)
-                if not challenge_player_reply.channel.type == 'dm':
+                if not player_reply.channel.type == discord.ChannelType.private:
                     await challenge_player_reply.delete()
 
                 new_embed = discord.Embed(title='Bottle Game', color=discord.Color.random())
