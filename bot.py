@@ -1390,7 +1390,7 @@ async def bottle(ctx, target_player, bet: str):
                     await message.edit(embed=new_embed)
                     session.commit()
                     game = False
-                elif bottle_position == 9:
+                elif bottle_position == 8:
                     challenge_player.wallet += 2*bet
                     new_embed = discord.Embed(title='Bottle Game', color=discord.Color.random())
                     new_embed.add_field(name=f'{challenge_player.name} Won!', value=f"Good game.", inline=False)
