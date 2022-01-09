@@ -320,7 +320,7 @@ async def roulette(ctx, bet: str, color: str):
             casino = session.query(Casino).filter_by(id=user.casino).first()
             casino_owner = session.query(User).filter_by(id=casino.user_id).first()
             tax_rate = get_tax(casino.level)
-            tax_owing = int(tax_rate * 35*bet)
+            tax_owing = int(tax_rate * 36*bet)
 
             user.wallet += (35*bet - tax_owing)
             casino.balance += tax_owing
@@ -443,7 +443,7 @@ async def flowerpoker(ctx, target_player, bet=None):
 
             reply = await bot.wait_for(event="message", check=author_check(member), timeout=30.0)
             
-            if reply.content in ['yes', 'y']:
+            if reply.content in ['yes', 'y', 'Y']:
                 
                 user.wallet -= bet
                 challenge_player.wallet -= bet
@@ -728,7 +728,7 @@ async def challenge(ctx, target_player, bet: str):
 
         reply = await bot.wait_for(event="message", check=author_check(member), timeout=30.0)
         
-        if reply.content in ['yes', 'y']:
+        if reply.content in ['yes', 'y', 'Y']:
             
             user.wallet -= bet
             challenge_player.wallet -= bet
@@ -1316,6 +1316,207 @@ async def highlow(ctx, bet: str):
             new_embed.set_footer(text=f"{user.name}", icon_url = ctx.author.avatar_url)
             await message.edit(embed=new_embed)
 
+@bot.command(name='bottle', aliases=["bg"], help='Play the bottle game against the bot.')
+async def bottle(ctx, target_player, bet: str):
+    # Query if User exists
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+
+    members = ctx.message.mentions
+    if members:
+        member = members[0]
+        member_name = members[0].name
+
+    challenge_player = session.query(User).filter_by(name=member_name).first()
+
+    if not user or not challenge_player:
+        await ctx.send("User does not exist.")
+
+    bet = validate_bet(bet)
+
+    if not bet:
+        await ctx.send("Invalid bet. Format's Available: 1, 1k, 1K, 1m, 1M")
+        return
+
+    if user.wallet < bet:
+        await ctx.send("Insufficient funds to make this challenge.")
+
+    elif challenge_player.wallet < bet:
+        await ctx.send(f"{challenge_player.name} is broke af.")
+    else:
+
+        embed = discord.Embed(title=f'Challenging {challenge_player.name}', color=discord.Color.random())
+        embed.add_field(name=f'{ctx.author.display_name} has challenged you to a duel for ${bet} Gold.', value="Type 'yes' or 'y' to accept.", inline=False)
+        embed.set_thumbnail(url='https://cdn-icons-png.flaticon.com/512/1732/1732452.png')
+        message = await ctx.send(embed=embed)
+
+        reply = await bot.wait_for(event="message", check=author_check(member), timeout=30.0)
+        
+        if reply.content in ['yes', 'y', 'Y']:
+            
+            user.wallet -= bet
+            challenge_player.wallet -= bet
+            session.commit()
+
+            game = True
+            win = False
+            bottle_position = 4
+            player_balance = 100
+            challenge_player_balance = 100
+            spots = 9
+            game_pieces = ['_' for idx in range(spots)]
+            game_pieces[bottle_position] = 'B'
+            game_board_display = ' '.join(game_pieces)
+
+            embed = discord.Embed(title='Bottle Game', color=discord.Color.random())
+            embed.add_field(name=f"{user.name} Balance",
+                            value=f"```{100}```", inline=True)
+            embed.add_field(name=f"{challenge_player.name} Balance",
+                            value=f"```{100}```", inline=True)
+            embed.add_field(name="Game",
+                            value=f"```{game_board_display}```", inline=False)
+            embed.add_field(name="Action",
+                            value=f"{user.name} needs to make a bet.", inline=False)
+            await message.edit(embed=embed)
+
+            while game:
+                if bottle_position == 0:
+                    user.wallet += 2*bet
+                    new_embed = discord.Embed(title='Bottle Game', color=discord.Color.random())
+                    new_embed.add_field(name=f'{user.name} Won!', value=f"Good game.", inline=False)
+                    new_embed.add_field(name=f"{user.name} Wallet",
+                                    value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+                    new_embed.add_field(name=f"{challenge_player.name} Wallet",
+                                    value=f"```cs\n${challenge_player.wallet:,d} Gold```", inline=False)
+                    await message.edit(embed=new_embed)
+                    session.commit()
+                    game = False
+                elif bottle_position == 9:
+                    challenge_player.wallet += 2*bet
+                    new_embed = discord.Embed(title='Bottle Game', color=discord.Color.random())
+                    new_embed.add_field(name=f'{challenge_player.name} Won!', value=f"Good game.", inline=False)
+                    new_embed.add_field(name=f"{user.name} Wallet",
+                                    value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+                    new_embed.add_field(name=f"{challenge_player.name} Wallet",
+                                    value=f"```cs\n${challenge_player.wallet:,d} Gold```", inline=False)
+                    await message.edit(embed=new_embed)
+                    session.commit()
+                    game = False
+                elif player_balance == 0 and challenge_player_balance == 0:
+                    challenge_player.wallet += bet
+                    user.wallet += bet
+                    new_embed = discord.Embed(title='Bottle Game', color=discord.Color.random())
+                    new_embed.add_field(name=f'{challenge_player.name} Draw!', value=f"Good game.", inline=False)
+                    new_embed.add_field(name=f"{user.name} Wallet",
+                                    value=f"```cs\n${user.wallet:,d} Gold```", inline=False)
+                    new_embed.add_field(name=f"{challenge_player.name} Wallet",
+                                    value=f"```cs\n${challenge_player.wallet:,d} Gold```", inline=False)
+                    await message.edit(embed=new_embed)
+                    session.commit()
+                    game = False
+
+                if not game:
+                    break
+
+                player_reply = await bot.wait_for(event="message", check=author_check(ctx.author), timeout=30.0)
+                
+                while not player_reply.content.isnumeric():
+                    await ctx.send(f"Invalid Response. Please bet a number between 0 and {player_balance}")
+                    player_reply = await bot.wait_for(event="message", check=author_check(ctx.author), timeout=30.0)
+
+                player_bet = int(player_reply.content)
+                await player_reply.delete()
+                
+                new_embed = discord.Embed(title='Bottle Game', color=discord.Color.random())
+                new_embed.add_field(name=f"{user.name} Balance",
+                                value=f"```{player_balance}```", inline=True)
+                new_embed.add_field(name=f"{challenge_player.name} Balance",
+                                value=f"```{challenge_player_balance}```", inline=True)
+                new_embed.add_field(name="Game",
+                                value=f"```{game_board_display}```", inline=False)
+                new_embed.add_field(name="Action",
+                                value=f"{user.name} has placed their bet. \n{challenge_player.name} needs to make a bet.", inline=False)
+                await message.edit(embed=new_embed)
+                
+                challenge_player_reply = await bot.wait_for(event="message", check=author_check(member), timeout=30.0)
+                while not challenge_player_reply.content.isnumeric():
+                    await ctx.send(f"Invalid Response. Please bet a number between 0 and {challenge_player_balance}")
+                    challenge_player_reply = await bot.wait_for(event="message", check=author_check(member), timeout=30.0)
+                
+                challenge_player_bet = int(challenge_player_reply.content)
+                await challenge_player_reply.delete()
+
+                new_embed = discord.Embed(title='Bottle Game', color=discord.Color.random())
+                new_embed.add_field(name=f"{user.name} Balance",
+                                value=f"```{100}```", inline=True)
+                new_embed.add_field(name=f"{challenge_player.name} Balance",
+                                value=f"```{100}```", inline=True)
+                new_embed.add_field(name="Game",
+                                value=f"```{game_board_display}```", inline=False)
+                new_embed.add_field(name="Action",
+                                value=f"Both players have placed their bet.", inline=False)
+                await message.edit(embed=new_embed)
+
+                if player_bet > challenge_player_bet:
+                    bottle_position -= 1
+                    player_balance -= player_bet
+                    round_winner = user
+                elif player_bet < challenge_player_bet:
+                    bottle_position += 1
+                    challenge_player_balance -= challenge_player_bet
+                    round_winner = challenge_player
+                else:
+                    if random.randint(0,1):
+                        bottle_position -= 1
+                        player_balance -= player_bet
+                        round_winner = user
+                    else:
+                        bottle_position += 1
+                        challenge_player_balance -= challenge_player_bet
+                        round_winner = challenge_player
+
+                game_pieces = ['_' for idx in range(spots)]
+                game_pieces[bottle_position] = 'B'
+                game_board_display = ' '.join(game_pieces)
+
+                if round_winner == user:
+                    new_embed = discord.Embed(title='Bottle Game', color=discord.Color.random())
+                    new_embed.add_field(name=f"{user.name} Bet",
+                                    value=f"```{player_bet}```", inline=True)
+                    new_embed.add_field(name=f"{challenge_player.name} Bet",
+                                    value=f"```{challenge_player_bet}```", inline=True)
+                    new_embed.add_field(name='\u200b', value='\u200b', inline=False)
+                    new_embed.add_field(name=f"{user.name} Balance",
+                                    value=f"```{player_balance}```", inline=True)
+                    new_embed.add_field(name=f"{challenge_player.name} Balance",
+                                    value=f"```{challenge_player_balance}```", inline=True)
+                    new_embed.add_field(name="Game",
+                                    value=f"```{game_board_display}```", inline=False)
+                    new_embed.add_field(name="Winner",
+                                    value=f"{user.name} won this round.", inline=False)
+                    await message.edit(embed=new_embed)
+                    await asyncio.sleep(1)
+                else:
+                    new_embed = discord.Embed(title='Bottle Game', color=discord.Color.random())
+                    new_embed.add_field(name=f"{user.name} Bet",
+                                    value=f"```{player_bet}```", inline=True)
+                    new_embed.add_field(name=f"{challenge_player.name} Bet",
+                                    value=f"```{challenge_player_bet}```", inline=True)
+                    new_embed.add_field(name='\u200b', value='\u200b', inline=False)
+                    new_embed.add_field(name=f"{user.name} Balance",
+                                    value=f"```{player_balance}```", inline=True)
+                    new_embed.add_field(name=f"{challenge_player.name} Balance",
+                                    value=f"```{challenge_player_balance}```", inline=True)
+                    new_embed.add_field(name="Game",
+                                    value=f"```{game_board_display}```", inline=False)
+                    new_embed.add_field(name="Winner",
+                                    value=f"{challenge_player.name} won this round.", inline=False)
+                    await message.edit(embed=new_embed)
+                    await asyncio.sleep(1)
+
+        else:
+            await ctx.send(f'{challenge_player.name} rejected the offer.')
+        
+
 @bot.command(name='rps', help='Do a Rock Paper Scissors match.')
 async def rps(ctx, bet: str, rps: str):
     # Query if User exists
@@ -1742,6 +1943,13 @@ async def buy(ctx, item=None):
                 await ctx.send('Insufficient Funds in wallet to level up Miner.')
             else:
                 user.wallet -= miner_upgrade_cost
+                # Update the balance of how much the miner collected since this was last checked
+                time_delta = datetime.datetime.now() - miner.last_worked
+                minutes = round(time_delta.total_seconds() / 60,0)
+                # A miner will gaurantee you a reward at the (miner) level equivalent of doing !work 3 times every hour (30 minutes of the 60 minutes)
+                miner.balance += int(3 * (10 ** (miner.level + 2)) * (minutes / 60))
+                miner.last_worked = datetime.datetime.now()
+                session.commit()
                 miner.level += 1
                 embed = discord.Embed(title=f"{ctx.author.display_name}'s Miner has leveled up!", color=discord.Color.green())
                 embed.add_field(name="Miner Level",
@@ -2348,18 +2556,16 @@ miner_level_urs = {
 
 flowers = [
     '<:assorted_flowers:928494518658007110>',
-    # '<:black_flowers:928494671041277963>',
     '<:blue_flowers:928494731489574923>',
     '<:orange_flowers:928494782127419394>',
     '<:mixed_flowers:928494829132980315>',
     '<:purple_flowers:928494904554975273>',
     '<:red_flowers:928494952642670673>',
-    # '<:white_flowers:928494995537817631>',
     '<:yellow_flowers:928495038248402945>'
 ]
 
 def get_tax(level):
-    return 0.02*(level)
+    return 0.02*(level)+0.05
 
 osrs_gp_url = 'https://oldschool.runescape.wiki/images/Coins_detail.png?404bc'
 
