@@ -2526,7 +2526,7 @@ def create_casino(user):
     return casino
 
 def validate_bet(bet):
-    bet = bet.replace('k', '000').replace('K','000').replace('m','000000').replace('M','000000')
+    bet = bet.replace('k', '000').replace('K','000').replace('m','000000').replace('M','000000').replace('b','000000000').replace('B','000000000')
 
     if bet.isnumeric():
         bet = int(bet)
