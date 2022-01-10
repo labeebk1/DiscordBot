@@ -2583,10 +2583,12 @@ rps_moves = {
 
 miner_level_urs = {
     1: 'https://i.pinimg.com/originals/75/61/5a/75615a37309f44c6f07353277429a4f2.png',
-    2: 'https://static.wikia.nocookie.net/leagueoflegends/images/9/96/Season_2019_-_Gold_1.png/revision/latest/scale-to-width-down/250?cb=20181229234920',
-    3: 'https://static.wikia.nocookie.net/leagueoflegends/images/7/74/Season_2019_-_Platinum_1.png/revision/latest/scale-to-width-down/250?cb=20181229234932',
+    2: 'https://static.wikia.nocookie.net/leagueoflegends/images/9/96/Season_2019_-_Gold_1.png',
+    3: 'https://static.wikia.nocookie.net/leagueoflegends/images/7/74/Season_2019_-_Platinum_1.png',
     4: 'https://i.pinimg.com/originals/6a/10/c7/6a10c7e84c9f4e4aa9412582d28f3fd2.png',
     5: 'https://i.pinimg.com/originals/69/61/ab/6961ab1af799f02df28fa74278d78120.png',
+    6: 'https://static.wikia.nocookie.net/leagueoflegends/images/5/58/Season_2019_-_Grandmaster_2.png',
+    7: 'https://static.wikia.nocookie.net/leagueoflegends/images/5/5f/Season_2019_-_Challenger_1.png'
 }
 
 flowers = [
