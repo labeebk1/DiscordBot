@@ -1551,7 +1551,6 @@ async def bottle(ctx, target_player, bet: str):
         else:
             await ctx.send(f'{challenge_player.name} rejected the offer.')
         
-
 @bot.command(name='rps', help='Do a Rock Paper Scissors match.')
 async def rps(ctx, bet: str, rps: str):
     # Query if User exists
@@ -1679,6 +1678,11 @@ async def work(ctx):
         await ctx.send(embed=embed)
 
     else:
+
+        if ctx.channel.type == discord.ChannelType.private:
+            await ctx.send("Don't PM me bro.")
+            return
+
         recent_job = user.last_work
 
         earnings = 10 ** (user.level + 2)
@@ -1731,6 +1735,10 @@ async def hourly(ctx):
         user.last_hourly = datetime.datetime.now()
         session.commit()
     else:
+        if ctx.channel.type == discord.ChannelType.private:
+            await ctx.send("Don't PM me bro.")
+            return
+
         time_delta = datetime.datetime.now() - user.last_hourly
         minutes = round(time_delta.total_seconds() / 60,0)
         if minutes > 60:
@@ -2037,19 +2045,20 @@ async def give(ctx, tagged_user, amount):
         embed.add_field(name=f"Your Wallet",
                         value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
         await ctx.send(embed=embed)
-        
-    elif amount > user.wallet:
-        await ctx.send("You don't own that kind of money...")
-
     else:
-        user.wallet -= amount
-        recipient.wallet += amount
-        embed = discord.Embed(title=f"Money Sent!", color=discord.Color.green())
-        embed.add_field(name=f"{recipient.name}'s' Wallet",
-                        value=f"```cs\n${recipient.wallet:,d} Gold```", inline=True)
-        embed.add_field(name=f"Your Wallet",
-                        value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
-        await ctx.send(embed=embed)
+        await ctx.send('Admin command only.')
+    # elif amount > user.wallet:
+    #     await ctx.send("You don't own that kind of money...")
+
+    # else:
+    #     user.wallet -= amount
+    #     recipient.wallet += amount
+    #     embed = discord.Embed(title=f"Money Sent!", color=discord.Color.green())
+    #     embed.add_field(name=f"{recipient.name}'s' Wallet",
+    #                     value=f"```cs\n${recipient.wallet:,d} Gold```", inline=True)
+    #     embed.add_field(name=f"Your Wallet",
+    #                     value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
+    #     await ctx.send(embed=embed)
 
     session.commit()
 
@@ -2602,7 +2611,7 @@ flowers = [
 ]
 
 def get_tax(level):
-    return 0.02*(level)+0.05
+    return 0# 0.02*(level)+0.05
 
 osrs_gp_url = 'https://oldschool.runescape.wiki/images/Coins_detail.png?404bc'
 
