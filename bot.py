@@ -12,7 +12,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import func
 
-from models import Casino, Miner, User, Ticket
+from models import Casino, Miner, User, Ticket, Profession
 from card import Card
 
 # Load Discord Bot
@@ -55,12 +55,43 @@ async def balance(ctx):
     casino_guests = session.query(User).filter_by(casino=casino.id).count()
 
     if user:
+        # Mechanic Earnings
+        professions = session.query(Profession).filter_by(user_id=user.id, profession_id=3).all()
+        crafter = False
+        if professions:
+            crafter = True
+
         if user.diamond == True:
             embed = discord.Embed(title=f"King {user.name} :diamond_shape_with_a_dot_inside:", 
+                        color=discord.Color.random())
+        elif crafter:
+            embed = discord.Embed(title=f"Jewel Crafter {user.name} :diamond_shape_with_a_dot_inside:", 
                         color=discord.Color.random())
         else:            
             embed = discord.Embed(title=f"{user.name}'s Bank", 
                         color=discord.Color.random())
+
+        # Mechanic Earnings
+        professions = session.query(Profession).filter_by(user_id=user.id, profession_id=2).all()
+        mechanic = False
+        if professions:
+            mechanic = True
+
+        if mechanic:        
+            miner = session.query(Miner).filter_by(user_id=user.id).first()
+
+            # Update the balance of how much the miner collected since this was last checked
+            time_delta = datetime.datetime.now() - miner.last_worked
+            minutes = round(time_delta.total_seconds() / 60,0)
+
+            # A miner will gaurantee you a reward at the (miner) level equivalent of doing !work 3 times every hour (30 minutes of the 60 minutes)
+            miner.balance += int(3 * (10 ** (miner.level + 2)) * (minutes / 60))
+            miner.last_worked = datetime.datetime.now()
+
+            earnings = int(3 * (10 ** (miner.level + 2)) * (minutes / 60))
+            user.wallet += earnings
+
+            session.commit()
 
         if members:
             embed.set_thumbnail(url=member.avatar_url)
@@ -73,6 +104,13 @@ async def balance(ctx):
                         value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
         embed.add_field(name="Bank",
                         value=f"```cs\n${user.bank:,d} Gold```", inline=True)
+
+        professions = session.query(Profession).filter_by(user_id=user.id).all()
+
+        if professions:
+            badges = ', '.join([profession_badges[profession.profession_id] for profession in professions])
+            embed.add_field(name="Professions",
+                            value=f"{badges}", inline=False)
 
         embed.set_footer(text=f"{user.shields} Active Shields, {casino_guests} Casino Guests", icon_url = "https://thumbs.dreamstime.com/b/well-organized-fully-editable-antivirus-protection-security-icon-any-use-like-print-media-web-commercial-use-any-kind-158454387.jpg")
 
@@ -1687,8 +1725,15 @@ async def work(ctx):
 
         earnings = 10 ** (user.level + 2)
 
-        if user.diamond == True:
+        # Mechanic Earnings
+        professions = session.query(Profession).filter_by(user_id=user.id, profession_id=3).all()
+        crafter = False
+        if professions:
+            crafter = True
+
+        if user.diamond == True or crafter:
             earnings *= 2
+
 
         time_delta = datetime.datetime.now() - recent_job
         minutes = round(time_delta.total_seconds() / 60,0)
@@ -1826,6 +1871,17 @@ async def miner(ctx):
     # A miner will gaurantee you a reward at the (miner) level equivalent of doing !work 3 times every hour (30 minutes of the 60 minutes)
     miner.balance += int(3 * (10 ** (miner.level + 2)) * (minutes / 60))
     miner.last_worked = datetime.datetime.now()
+
+    # Mechanic Earnings
+    professions = session.query(Profession).filter_by(user_id=user.id, profession_id=2).first()
+    mechanic = False
+    if professions:
+        mechanic = True
+
+    if mechanic:
+        earnings = int(3 * (10 ** (miner.level + 2)) * (minutes / 60))
+        user.wallet += earnings
+
     session.commit()
 
     embed.set_thumbnail(url=miner_level_urs[miner.level])
@@ -1833,6 +1889,10 @@ async def miner(ctx):
                     value=f"```cs\n{str(miner.level)}```", inline=True)
     embed.add_field(name="Collected",
                     value=f"```cs\n${miner.balance:,d} Gold```", inline=True)
+    if mechanic:
+        embed.add_field(name="Mechanic Earnings",
+                        value=f"```cs\n${earnings:,d} Gold```", inline=False)
+
     await ctx.send(embed=embed)
 
 @bot.command(name='collect', aliases=["coll"], help='Collect your miners earnings.')
@@ -1939,13 +1999,26 @@ async def buy(ctx, item=None):
         if not item:
             level_up_cost = 10 ** (user.level + 4)
             shield_cost = int(1.5 * (10 ** (user.level + 2)))
-            miner_upgrade_cost = 2 * 10 ** (miner.level + 4)
+
+            # Mechanic Earnings
+            professions = session.query(Profession).filter_by(user_id=user.id, profession_id=2).all()
+            if professions:
+                miner_upgrade_cost = 10 ** (miner.level + 4)
+            else:
+                miner_upgrade_cost = 2 * 10 ** (miner.level + 4)
+
             casino_upgarde_cost = 10 ** (casino.level + 4)
             embed = discord.Embed(title=f"{ctx.author.display_name}'s Shop", color=discord.Color.random())
             embed.add_field(name='[ID: 1] Shield', value=f"```cs\n${shield_cost:,d} Gold```", inline=False)
-            embed.add_field(name='[ID: 2] Level Up', value=f"```cs\n${level_up_cost:,d} Gold```", inline=False)
-            embed.add_field(name='[ID: 3] Miner Upgrade', value=f"```cs\n${miner_upgrade_cost:,d} Gold```", inline=False)
+
+            if user.level < 5:
+                embed.add_field(name='[ID: 2] Level Up', value=f"```cs\n${level_up_cost:,d} Gold```", inline=False)
+
+            if miner.level < 5:
+                embed.add_field(name='[ID: 3] Miner Upgrade', value=f"```cs\n${miner_upgrade_cost:,d} Gold```", inline=False)
+
             embed.add_field(name='[ID: 4] Casino Upgrade', value=f"```cs\n${casino_upgarde_cost:,d} Gold```", inline=False)
+
             embed.add_field(name="Wallet",
                             value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
             await ctx.send(embed=embed)
@@ -1972,6 +2045,8 @@ async def buy(ctx, item=None):
             level_up_cost = 10 ** (user.level + 4)
             if user.wallet < level_up_cost:
                 await ctx.send('Insufficient Funds in wallet to level up.')
+            elif user.level >= 5:
+                await ctx.send('You have hit the max level. Consider a profession instead.')
             else:
                 user.wallet -= level_up_cost
                 user.level += 1
@@ -1981,9 +2056,18 @@ async def buy(ctx, item=None):
                 await ctx.send(embed=embed)
 
         elif item == '3':
-            miner_upgrade_cost = 2 * 10 ** (miner.level + 4)
+            # Mechanic Earnings
+            professions = session.query(Profession).filter_by(user_id=user.id, profession_id=2).all()
+            if professions:
+                miner_upgrade_cost = 10 ** (miner.level + 4)
+            else:
+                miner_upgrade_cost = 2 * 10 ** (miner.level + 4)
+
+
             if user.wallet < miner_upgrade_cost:
                 await ctx.send('Insufficient Funds in wallet to level up Miner.')
+            elif miner.level >= 5:
+                await ctx.send('You have hit the max level. Consider a profession instead.')
             else:
                 user.wallet -= miner_upgrade_cost
                 # Update the balance of how much the miner collected since this was last checked
@@ -2016,6 +2100,101 @@ async def buy(ctx, item=None):
 
     session.commit()
 
+@bot.command(name='prof', aliases=["profession"], help='Specialize in professions.')
+async def profession(ctx, item=None):
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+    
+    if not user:
+        await ctx.send('User not found.')
+    else:
+
+        miner = session.query(Miner).filter_by(user_id=user.id).first()
+
+        if not item:
+            embed = discord.Embed(title=f"{ctx.author.display_name}'s Profession Shop", color=discord.Color.random())
+            embed.add_field(name='Profession', value=f"A profession costs a user and miner level of 5. \n You will be reset to level 1 once you specialize.", inline=False)
+            
+            embed.add_field(name='[ID: 1] The Thief', value=f"- Robbing people will ignore their shields 50% of the time \n \
+                                                          - Can never be counter robbed\n \
+                                                          - Rob timer reduced to 10 minutes", inline=False)
+
+            embed.add_field(name='[ID: 2] The Mechanic', value=f"- Your miner collects gold at a 2x rate \n \
+                                                          - The boosted gold goes straight to your wallet\n \
+                                                          - Cost to upgrade the miner is reduced by half", inline=False)
+
+            embed.add_field(name='[ID: 3] The Jewel Crafter', value=f"- Own your own diamond permanently", inline=False)
+
+            embed.add_field(name='[ID: 4] The Terrorist', value=f"- Learn a 'sacrifice' command \n \
+                                                                  - Sacrifice your level/miner level for another players level / miner level \n \
+                                                                  - Must be the same level (or higher) than the other player", inline=False)
+            
+            embed.add_field(name='Buying', value=f"To specialize, enter the id in this command. Example:\n .prof 1", inline=False)
+            
+            await ctx.send(embed=embed)
+
+        elif item == '1':
+            if user.level < 5 or miner.level < 5:
+                await ctx.send("You need a user and miner level of 5 to buy this.")
+            elif session.query(Profession).filter_by(user_id=user.id, profession_id=1).first():
+                await ctx.send("You already have this profession.")
+            else:
+                user.level = 1
+                miner.level = 1
+                profession = Profession(
+                    user_id=user.id,
+                    profession_id=1
+                )
+                session.add(profession)
+                session.commit()
+                await ctx.send("Upgrade successful. You are now a Thief!")
+        elif item == '2':
+            if user.level < 5 or miner.level < 5:
+                await ctx.send("You need a user and miner level of 5 to buy this.")
+            elif session.query(Profession).filter_by(user_id=user.id, profession_id=2).first():
+                await ctx.send("You already have this profession.")
+            else:
+                user.level = 1
+                miner.level = 1
+                profession = Profession(
+                    user_id=user.id,
+                    profession_id=2
+                )
+                session.add(profession)
+                session.commit()
+                await ctx.send("Upgrade successful. You are now a Mechanic!")
+        elif item == '3':
+            if user.level < 5 or miner.level < 5:
+                await ctx.send("You need a user and miner level of 5 to buy this.")
+            elif session.query(Profession).filter_by(user_id=user.id, profession_id=3).first():
+                await ctx.send("You already have this profession.")
+            else:
+                user.level = 1
+                miner.level = 1
+                profession = Profession(
+                    user_id=user.id,
+                    profession_id=3
+                )
+                session.add(profession)
+                session.commit()
+                await ctx.send("Upgrade successful. You are now a Jewel Crafter!")
+        elif item == '4':
+            if user.level < 5 or miner.level < 5:
+                await ctx.send("You need a user and miner level of 5 to buy this.")
+            elif session.query(Profession).filter_by(user_id=user.id, profession_id=4).first():
+                await ctx.send("You already have this profession.")
+            else:
+                user.level = 1
+                miner.level = 1
+                profession = Profession(
+                    user_id=user.id,
+                    profession_id=4
+                )
+                session.add(profession)
+                session.commit()
+                await ctx.send("Upgrade successful. You are now a Terrorist!!")
+        else:
+            await ctx.send('Item not in shop.')
+
 @bot.command(name='give', aliases=["t","transfer"], help='Give money to a player.')
 async def give(ctx, tagged_user, amount):
     user = session.query(User).filter_by(name=ctx.author.name).first()
@@ -2045,20 +2224,17 @@ async def give(ctx, tagged_user, amount):
         embed.add_field(name=f"Your Wallet",
                         value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
         await ctx.send(embed=embed)
+    elif amount > user.wallet:
+        await ctx.send("You don't own that kind of money...")
     else:
-        await ctx.send('Admin command only.')
-    # elif amount > user.wallet:
-    #     await ctx.send("You don't own that kind of money...")
-
-    # else:
-    #     user.wallet -= amount
-    #     recipient.wallet += amount
-    #     embed = discord.Embed(title=f"Money Sent!", color=discord.Color.green())
-    #     embed.add_field(name=f"{recipient.name}'s' Wallet",
-    #                     value=f"```cs\n${recipient.wallet:,d} Gold```", inline=True)
-    #     embed.add_field(name=f"Your Wallet",
-    #                     value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
-    #     await ctx.send(embed=embed)
+        user.wallet -= amount
+        recipient.wallet += amount
+        embed = discord.Embed(title=f"Money Sent!", color=discord.Color.green())
+        embed.add_field(name=f"{recipient.name}'s' Wallet",
+                        value=f"```cs\n${recipient.wallet:,d} Gold```", inline=True)
+        embed.add_field(name=f"Your Wallet",
+                        value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
+        await ctx.send(embed=embed)
 
     session.commit()
 
@@ -2124,6 +2300,72 @@ async def take(ctx, tagged_user, amount):
         await ctx.send(embed=embed)
 
     session.commit()
+
+@bot.command(name='sacrifice', help='Sacrifice yourself. Format: .sacrifice User Level/Miner')
+async def sacrifice(ctx, tagged_user=None, item_type=None):
+    user = session.query(User).filter_by(name=ctx.author.name).first()
+
+    if not tagged_user:
+        await ctx.send('You must tag someone.')
+        return
+
+    if not item_type in ['level', 'miner']:
+        await ctx.send('Invalid format. Use: .sacrifice User Level/Miner')
+        return
+    
+    members = ctx.message.mentions
+    if members:
+        member_name = members[0].name
+
+    if not members:
+        await ctx.send('You must tag someone to sacrifice yourself.')
+        return
+
+    recipient = session.query(User).filter_by(name=member_name).first()
+
+    if not recipient:
+        await ctx.send('User does not exist. They must create an account by typing !bal')
+        return
+    
+    professions = session.query(Profession).filter_by(user_id=user.id, profession_id=4).first()
+    if not professions:
+        await ctx.send('You need to be a terrorist to use this command.')
+        return
+    else:
+        
+        user_miner = session.query(Miner).filter_by(user_id=user.id).first()
+        recipient_miner = session.query(Miner).filter_by(user_id=recipient.id).first()
+
+        if item_type == 'level' and user.level < recipient.level:
+            await ctx.send('You must be a higher level to sacrifice your level to this person.')
+            return
+
+        if item_type == 'miner' and user_miner.level < recipient_miner.level:
+            await ctx.send('You miner must be a higher level to sacrifice your level to this person.')
+            return
+        
+        if item_type == 'level':
+            user_miner.level -= 1
+            recipient_miner.level -= 1
+            session.commit()
+            embed = discord.Embed(title=f"{user.name} Blew Up!!", color=discord.Color.red())
+            embed.add_field(name=f"{recipient.name}'s' Level",
+                            value=f"```cs\n${recipient.level:,d}```", inline=True)
+            embed.add_field(name=f"{user.name} Level",
+                            value=f"```cs\n${user.level:,d}```", inline=True)
+            await ctx.send(embed=embed)
+        
+        elif item_type == 'miner':
+            user.level -= 1
+            recipient.level -= 1
+            session.commit()
+            embed = discord.Embed(title=f"{user.name} Blew Up!!", color=discord.Color.red())
+            embed.add_field(name=f"{recipient.name}'s' Miner Level",
+                            value=f"```cs\n${recipient_miner.level:,d}```", inline=True)
+            embed.add_field(name=f"{user.name} Miner Level",
+                            value=f"```cs\n${user_miner.level:,d}```", inline=True)
+            await ctx.send(embed=embed)
+
 
 @bot.command(name='setlevel', help='Admin command only.')
 async def setlevel(ctx, tagged_user, amount):
@@ -2275,67 +2517,105 @@ async def rob(ctx, tagged_user):
         rob_user = False
         time_delta = datetime.datetime.now() - user.last_rob
         minutes = round(time_delta.total_seconds() / 60,0)
+        
+        thief = False
+        professions = session.query(Profession).filter_by(user_id=user.id, profession_id=1).first()
+        if professions:
+            thief = True
 
-        if minutes > 20:
+        if minutes > 20 or (thief and minutes > 10):
             rob_user = True
             user.last_rob = datetime.datetime.now()
         else:
             time_remaining = int(20-minutes)
+            if thief:
+                time_remaining = int(10-minutes)
             embed = discord.Embed(title=f'Robbery', color=discord.Color.red())
             embed.add_field(name=f'{ctx.author.display_name}', value=f"{time_remaining} minutes remaining...", inline=False)
             await ctx.send(embed=embed)
         
         if rob_user:
-            rob_result = random.randint(1,10)
-            if rob_result >= 6:
-                if recipient.shields > 0:
-                    recipient.shields -= 1
-                    user.wallet -= 1500
-                    embed = discord.Embed(title=f"{recipient.name} defended the attack!", color=discord.Color.red())
-                    embed.add_field(name="Shields Remaining",
-                                    value=f"```cs\n{str(recipient.shields)}```", inline=True)
-                    await ctx.send(embed=embed)
-                else:
-                    proportion_to_take = random.uniform(0,1)
-                    amount_to_take = int(proportion_to_take * recipient.wallet)
-                    user.wallet += amount_to_take
-                    recipient.wallet -= amount_to_take
+            if not thief:
+                rob_result = random.randint(1,10)
+                if rob_result >= 6:
+                    if recipient.shields > 0:
+                        recipient.shields -= 1
+                        user.wallet -= 1500
+                        embed = discord.Embed(title=f"{recipient.name} defended the attack!", color=discord.Color.red())
+                        embed.add_field(name="Shields Remaining",
+                                        value=f"```cs\n{str(recipient.shields)}```", inline=True)
+                        await ctx.send(embed=embed)
+                    else:
+                        proportion_to_take = random.uniform(0,1)
+                        amount_to_take = int(proportion_to_take * recipient.wallet)
+                        user.wallet += amount_to_take
+                        recipient.wallet -= amount_to_take
 
-                    embed = discord.Embed(title=f"You Robbed {recipient.name}", color=discord.Color.green())
+                        embed = discord.Embed(title=f"You Robbed {recipient.name}", color=discord.Color.green())
+                        embed.add_field(name=f"Amount Stolen",
+                                        value=f"```cs\n${amount_to_take:,d} Gold```", inline=False)
+                        embed.add_field(name=f"{recipient.name}'s' Wallet",
+                                        value=f"```cs\n${recipient.wallet:,d} Gold```", inline=True)
+                        embed.add_field(name=f"Your Wallet",
+                                        value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
+                        await ctx.send(embed=embed)
+
+                elif rob_result >= 3:
+                    user.wallet -= 1500
+                    embed = discord.Embed(title=f"{recipient.name} got away!", color=discord.Color.red())
                     embed.add_field(name=f"Amount Stolen",
-                                    value=f"```cs\n${amount_to_take:,d} Gold```", inline=False)
+                                    value=f"```cs\n${0} Gold```", inline=False)
+                    await ctx.send(embed=embed)
+
+                else:
+                    proportion_to_give = random.uniform(0,0.5)
+                    amount_to_give = max(int(proportion_to_give * user.wallet), int(0.1 * user.bank))
+                    
+                    if amount_to_give > user.wallet:
+                        user.bank -= amount_to_give
+                    else:
+                        user.wallet -= amount_to_give
+
+                    recipient.wallet += amount_to_give
+
+                    embed = discord.Embed(title=f"You lost the fight and {recipient.name} Robbed you back!", color=discord.Color.red())
+                    embed.add_field(name=f"Amount Lost",
+                                    value=f"```cs\n${amount_to_give:,d} Gold```", inline=False)
                     embed.add_field(name=f"{recipient.name}'s' Wallet",
                                     value=f"```cs\n${recipient.wallet:,d} Gold```", inline=True)
                     embed.add_field(name=f"Your Wallet",
                                     value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
                     await ctx.send(embed=embed)
-
-            elif rob_result >= 3:
-                user.wallet -= 1500
-                embed = discord.Embed(title=f"{recipient.name} got away!", color=discord.Color.red())
-                embed.add_field(name=f"Amount Stolen",
-                                value=f"```cs\n${0} Gold```", inline=False)
-                await ctx.send(embed=embed)
-
             else:
-                proportion_to_give = random.uniform(0,0.5)
-                amount_to_give = max(int(proportion_to_give * user.wallet), int(0.1 * user.bank))
-                
-                if amount_to_give > user.wallet:
-                    user.bank -= amount_to_give
+                rob_result = random.randint(1,10)
+                if rob_result >= 6:
+                    if recipient.shields > 0 and random.randint(0,1):
+                        recipient.shields -= 1
+                        user.wallet -= 1500
+                        embed = discord.Embed(title=f"{recipient.name} defended the attack!", color=discord.Color.red())
+                        embed.add_field(name="Shields Remaining",
+                                        value=f"```cs\n{str(recipient.shields)}```", inline=True)
+                        await ctx.send(embed=embed)
+                    else:
+                        proportion_to_take = random.uniform(0,1)
+                        amount_to_take = int(proportion_to_take * recipient.wallet)
+                        user.wallet += amount_to_take
+                        recipient.wallet -= amount_to_take
+
+                        embed = discord.Embed(title=f"You Robbed {recipient.name}", color=discord.Color.green())
+                        embed.add_field(name=f"Amount Stolen",
+                                        value=f"```cs\n${amount_to_take:,d} Gold```", inline=False)
+                        embed.add_field(name=f"{recipient.name}'s' Wallet",
+                                        value=f"```cs\n${recipient.wallet:,d} Gold```", inline=True)
+                        embed.add_field(name=f"Your Wallet",
+                                        value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
+                        await ctx.send(embed=embed)
                 else:
-                    user.wallet -= amount_to_give
-
-                recipient.wallet += amount_to_give
-
-                embed = discord.Embed(title=f"You lost the fight and {recipient.name} Robbed you back!", color=discord.Color.red())
-                embed.add_field(name=f"Amount Lost",
-                                value=f"```cs\n${amount_to_give:,d} Gold```", inline=False)
-                embed.add_field(name=f"{recipient.name}'s' Wallet",
-                                value=f"```cs\n${recipient.wallet:,d} Gold```", inline=True)
-                embed.add_field(name=f"Your Wallet",
-                                value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
-                await ctx.send(embed=embed)
+                    user.wallet -= 1500
+                    embed = discord.Embed(title=f"{recipient.name} got away!", color=discord.Color.red())
+                    embed.add_field(name=f"Amount Stolen",
+                                    value=f"```cs\n${0} Gold```", inline=False)
+                    await ctx.send(embed=embed)
 
     session.commit()
 
@@ -2525,6 +2805,7 @@ async def commands(ctx):
 # Helper Functions
 def create_casino(user):
     casino = Casino(
+        
         user_id=user.id,
         level=1,
         balance=0
@@ -2609,6 +2890,13 @@ flowers = [
     '<:red_flowers:928494952642670673>',
     '<:yellow_flowers:928495038248402945>'
 ]
+
+profession_badges = {
+    1: 'Thief :moneybag:',
+    2: 'Mechanic :pick:',
+    3: 'Jewel Crafter :diamond_shape_with_a_dot_inside:',
+    4: 'Terrorist :bomb:'
+}
 
 def get_tax(level):
     return 0# 0.02*(level)+0.05

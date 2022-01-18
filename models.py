@@ -24,6 +24,12 @@ class User(Base):
     def __repr__(self):
         return "<User(name='%s')>" % (self.name)
 
+class Profession(Base):
+    __tablename__ = 'profession'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    profession_id = Column(Integer)
+
 class Miner(Base):
     __tablename__ = 'miner'
     id = Column(Integer, primary_key=True)
