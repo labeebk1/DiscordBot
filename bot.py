@@ -2239,14 +2239,15 @@ async def give(ctx, tagged_user, amount):
     elif amount > user.wallet:
         await ctx.send("You don't own that kind of money...")
     else:
-        user.wallet -= amount
-        recipient.wallet += amount
-        embed = discord.Embed(title=f"Money Sent!", color=discord.Color.green())
-        embed.add_field(name=f"{recipient.name}'s' Wallet",
-                        value=f"```cs\n${recipient.wallet:,d} Gold```", inline=True)
-        embed.add_field(name=f"Your Wallet",
-                        value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
-        await ctx.send(embed=embed)
+        await ctx.send("Admin command only")
+        # user.wallet -= amount
+        # recipient.wallet += amount
+        # embed = discord.Embed(title=f"Money Sent!", color=discord.Color.green())
+        # embed.add_field(name=f"{recipient.name}'s' Wallet",
+        #                 value=f"```cs\n${recipient.wallet:,d} Gold```", inline=True)
+        # embed.add_field(name=f"Your Wallet",
+        #                 value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
+        # await ctx.send(embed=embed)
 
     session.commit()
 
