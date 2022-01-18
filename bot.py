@@ -2144,6 +2144,9 @@ async def profession(ctx, item=None):
                     user_id=user.id,
                     profession_id=1
                 )
+                user.wallet = 0
+                user.bank = 0
+                miner.balance = 0
                 session.add(profession)
                 session.commit()
                 await ctx.send("Upgrade successful. You are now a Thief!")
@@ -2159,6 +2162,9 @@ async def profession(ctx, item=None):
                     user_id=user.id,
                     profession_id=2
                 )
+                user.wallet = 0
+                user.bank = 0
+                miner.balance = 0
                 session.add(profession)
                 session.commit()
                 await ctx.send("Upgrade successful. You are now a Mechanic!")
@@ -2174,6 +2180,9 @@ async def profession(ctx, item=None):
                     user_id=user.id,
                     profession_id=3
                 )
+                user.wallet = 0
+                user.bank = 0
+                miner.balance = 0
                 session.add(profession)
                 session.commit()
                 await ctx.send("Upgrade successful. You are now a Jewel Crafter!")
@@ -2189,6 +2198,9 @@ async def profession(ctx, item=None):
                     user_id=user.id,
                     profession_id=4
                 )
+                user.wallet = 0
+                user.bank = 0
+                miner.balance = 0
                 session.add(profession)
                 session.commit()
                 await ctx.send("Upgrade successful. You are now a Terrorist!!")
