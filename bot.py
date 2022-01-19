@@ -2127,6 +2127,9 @@ async def profession(ctx, item=None):
             embed.add_field(name='[ID: 4] The Terrorist', value=f"- Learn a 'sacrifice' command \n \
                                                                   - Sacrifice your level/miner level for another players level / miner level \n \
                                                                   - Must be the same level (or higher) than the other player", inline=False)
+
+            embed.add_field(name='[ID: 5] The Ragger', value=f"- Learn a 'rag' command \n \
+                                                                  - Rag a player and take down a percentage of their wallet/bank", inline=False)
             
             embed.add_field(name='Buying', value=f"To specialize, enter the id in this command. Example:\n .prof 1", inline=False)
             
@@ -2204,6 +2207,25 @@ async def profession(ctx, item=None):
                 session.add(profession)
                 session.commit()
                 await ctx.send("Upgrade successful. You are now a Terrorist!!")
+
+        elif item == '5':
+            if user.level < 5 or miner.level < 5:
+                await ctx.send("You need a user and miner level of 5 to buy this.")
+            elif session.query(Profession).filter_by(user_id=user.id, profession_id=5).first():
+                await ctx.send("You already have this profession.")
+            else:
+                user.level = 1
+                miner.level = 1
+                profession = Profession(
+                    user_id=user.id,
+                    profession_id=5
+                )
+                user.wallet = 0
+                user.bank = 0
+                miner.balance = 0
+                session.add(profession)
+                session.commit()
+                await ctx.send("Upgrade successful. You are now a RAGGER!!!")
         else:
             await ctx.send('Item not in shop.')
 
@@ -2349,35 +2371,87 @@ async def sacrifice(ctx, tagged_user=None, item_type=None):
         user_miner = session.query(Miner).filter_by(user_id=user.id).first()
         recipient_miner = session.query(Miner).filter_by(user_id=recipient.id).first()
 
-        if item_type == 'level' and user.level < recipient.level:
+        if item_type == 'level' and user.level < recipient.level and recipient.level > 1:
             await ctx.send('You must be a higher level to sacrifice your level to this person.')
             return
 
-        if item_type == 'miner' and user_miner.level < recipient_miner.level:
+        if item_type == 'miner' and user_miner.level < recipient_miner.level and recipient_miner.level > 1:
             await ctx.send('You miner must be a higher level to sacrifice your level to this person.')
             return
         
-        if item_type == 'level':
+        if item_type == 'miner':
             user_miner.level -= 1
             recipient_miner.level -= 1
             session.commit()
             embed = discord.Embed(title=f"{user.name} Blew Up!!", color=discord.Color.red())
-            embed.add_field(name=f"{recipient.name}'s' Level",
-                            value=f"```cs\n${recipient.level:,d}```", inline=True)
-            embed.add_field(name=f"{user.name} Level",
-                            value=f"```cs\n${user.level:,d}```", inline=True)
+            embed.add_field(name=f"{recipient.name}'s' Miner Level",
+                            value=f"```cs\n{user_miner.level:,d}```", inline=True)
+            embed.add_field(name=f"{user.name} Miner Level",
+                            value=f"```cs\n{recipient_miner.level:,d}```", inline=True)
             await ctx.send(embed=embed)
         
-        elif item_type == 'miner':
+        elif item_type == 'level':
             user.level -= 1
             recipient.level -= 1
             session.commit()
             embed = discord.Embed(title=f"{user.name} Blew Up!!", color=discord.Color.red())
-            embed.add_field(name=f"{recipient.name}'s' Miner Level",
-                            value=f"```cs\n${recipient_miner.level:,d}```", inline=True)
-            embed.add_field(name=f"{user.name} Miner Level",
-                            value=f"```cs\n${user_miner.level:,d}```", inline=True)
+            embed.add_field(name=f"{recipient.name}'s' Level",
+                            value=f"```cs\n{recipient.level:,d}```", inline=True)
+            embed.add_field(name=f"{user.name} Level",
+                            value=f"```cs\n{user.level:,d}```", inline=True)
             await ctx.send(embed=embed)
+
+
+# @bot.command(name='rag', help='Rag a player. Format: .rag User')
+# async def rag(ctx, tagged_user=None):
+#     user = session.query(User).filter_by(name=ctx.author.name).first()
+
+#     if not tagged_user:
+#         await ctx.send('You must tag someone.')
+#         return
+
+#     members = ctx.message.mentions
+#     if members:
+#         member_name = members[0].name
+
+#     if not members:
+#         await ctx.send('You must tag someone to sacrifice yourself.')
+#         return
+
+#     recipient = session.query(User).filter_by(name=member_name).first()
+
+#     if not recipient:
+#         await ctx.send('User does not exist. They must create an account by typing !bal')
+#         return
+    
+#     professions = session.query(Profession).filter_by(user_id=user.id, profession_id=5).first()
+#     if not professions:
+#         await ctx.send('You need to be a ragger to use this command.')
+#         return
+#     else:
+        
+#         user_miner = session.query(Miner).filter_by(user_id=user.id).first()
+#         recipient_miner = session.query(Miner).filter_by(user_id=recipient.id).first()
+
+#         # 60% hits wallet
+#         # 40% hits bank
+
+#         # if wallet
+#             # 0 to 100
+#         # if bank
+#             # 65% - Failure
+#             # 25% - 50%
+#             # 15% - Clean completely 
+
+#         user.level -= 1
+#         recipient.level -= 1
+#         session.commit()
+#         embed = discord.Embed(title=f"{user.name} Blew Up!!", color=discord.Color.red())
+#         embed.add_field(name=f"{recipient.name}'s' Miner Level",
+#                         value=f"```cs\n${recipient_miner.level:,d}```", inline=True)
+#         embed.add_field(name=f"{user.name} Miner Level",
+#                         value=f"```cs\n${user_miner.level:,d}```", inline=True)
+#         await ctx.send(embed=embed)
 
 
 @bot.command(name='setlevel', help='Admin command only.')
