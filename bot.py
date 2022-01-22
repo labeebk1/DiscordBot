@@ -2114,45 +2114,16 @@ async def profession(ctx, item=None):
             embed = discord.Embed(title=f"{ctx.author.display_name}'s Profession Shop", color=discord.Color.random())
             embed.add_field(name='Profession', value=f"A profession costs a user and miner level of 5. \n You will be reset to level 1 once you specialize.", inline=False)
             
-            embed.add_field(name='[ID: 1] The Thief', value=f"- Robbing people will ignore their shields 50% of the time \n \
-                                                          - Can never be counter robbed\n \
-                                                          - Rob timer reduced to 10 minutes", inline=False)
-
             embed.add_field(name='[ID: 2] The Mechanic', value=f"- Your miner collects gold at a 2x rate \n \
                                                           - The boosted gold goes straight to your wallet\n \
                                                           - Cost to upgrade the miner is reduced by half", inline=False)
 
             embed.add_field(name='[ID: 3] The Jewel Crafter', value=f"- Own your own diamond permanently", inline=False)
 
-            embed.add_field(name='[ID: 4] The Terrorist', value=f"- Learn a 'sacrifice' command \n \
-                                                                  - Sacrifice your level/miner level for another players level / miner level \n \
-                                                                  - Must be the same level (or higher) than the other player", inline=False)
-
-            embed.add_field(name='[ID: 5] The Ragger', value=f"- Learn a 'rag' command \n \
-                                                                  - Rag a player and take down a percentage of their wallet/bank", inline=False)
-            
             embed.add_field(name='Buying', value=f"To specialize, enter the id in this command. Example:\n .prof 1", inline=False)
             
             await ctx.send(embed=embed)
 
-        elif item == '1':
-            if user.level < 5 or miner.level < 5:
-                await ctx.send("You need a user and miner level of 5 to buy this.")
-            elif session.query(Profession).filter_by(user_id=user.id, profession_id=1).first():
-                await ctx.send("You already have this profession.")
-            else:
-                user.level = 1
-                miner.level = 1
-                profession = Profession(
-                    user_id=user.id,
-                    profession_id=1
-                )
-                user.wallet = 0
-                user.bank = 0
-                miner.balance = 0
-                session.add(profession)
-                session.commit()
-                await ctx.send("Upgrade successful. You are now a Thief!")
         elif item == '2':
             if user.level < 5 or miner.level < 5:
                 await ctx.send("You need a user and miner level of 5 to buy this.")
@@ -2189,43 +2160,6 @@ async def profession(ctx, item=None):
                 session.add(profession)
                 session.commit()
                 await ctx.send("Upgrade successful. You are now a Jewel Crafter!")
-        elif item == '4':
-            if user.level < 5 or miner.level < 5:
-                await ctx.send("You need a user and miner level of 5 to buy this.")
-            elif session.query(Profession).filter_by(user_id=user.id, profession_id=4).first():
-                await ctx.send("You already have this profession.")
-            else:
-                user.level = 1
-                miner.level = 1
-                profession = Profession(
-                    user_id=user.id,
-                    profession_id=4
-                )
-                user.wallet = 0
-                user.bank = 0
-                miner.balance = 0
-                session.add(profession)
-                session.commit()
-                await ctx.send("Upgrade successful. You are now a Terrorist!!")
-
-        elif item == '5':
-            if user.level < 5 or miner.level < 5:
-                await ctx.send("You need a user and miner level of 5 to buy this.")
-            elif session.query(Profession).filter_by(user_id=user.id, profession_id=5).first():
-                await ctx.send("You already have this profession.")
-            else:
-                user.level = 1
-                miner.level = 1
-                profession = Profession(
-                    user_id=user.id,
-                    profession_id=5
-                )
-                user.wallet = 0
-                user.bank = 0
-                miner.balance = 0
-                session.add(profession)
-                session.commit()
-                await ctx.send("Upgrade successful. You are now a RAGGER!!!")
         else:
             await ctx.send('Item not in shop.')
 
@@ -2335,124 +2269,6 @@ async def take(ctx, tagged_user, amount):
         await ctx.send(embed=embed)
 
     session.commit()
-
-@bot.command(name='sacrifice', help='Sacrifice yourself. Format: .sacrifice User Level/Miner')
-async def sacrifice(ctx, tagged_user=None, item_type=None):
-    user = session.query(User).filter_by(name=ctx.author.name).first()
-
-    if not tagged_user:
-        await ctx.send('You must tag someone.')
-        return
-
-    if not item_type in ['level', 'miner']:
-        await ctx.send('Invalid format. Use: .sacrifice User Level/Miner')
-        return
-    
-    members = ctx.message.mentions
-    if members:
-        member_name = members[0].name
-
-    if not members:
-        await ctx.send('You must tag someone to sacrifice yourself.')
-        return
-
-    recipient = session.query(User).filter_by(name=member_name).first()
-
-    if not recipient:
-        await ctx.send('User does not exist. They must create an account by typing !bal')
-        return
-    
-    professions = session.query(Profession).filter_by(user_id=user.id, profession_id=4).first()
-    if not professions:
-        await ctx.send('You need to be a terrorist to use this command.')
-        return
-    else:
-        
-        user_miner = session.query(Miner).filter_by(user_id=user.id).first()
-        recipient_miner = session.query(Miner).filter_by(user_id=recipient.id).first()
-
-        if item_type == 'level' and user.level < recipient.level and recipient.level > 1:
-            await ctx.send('You must be a higher level to sacrifice your level to this person.')
-            return
-
-        if item_type == 'miner' and user_miner.level < recipient_miner.level and recipient_miner.level > 1:
-            await ctx.send('You miner must be a higher level to sacrifice your level to this person.')
-            return
-        
-        if item_type == 'miner':
-            user_miner.level -= 1
-            recipient_miner.level -= 1
-            session.commit()
-            embed = discord.Embed(title=f"{user.name} Blew Up!!", color=discord.Color.red())
-            embed.add_field(name=f"{recipient.name}'s' Miner Level",
-                            value=f"```cs\n{user_miner.level:,d}```", inline=True)
-            embed.add_field(name=f"{user.name} Miner Level",
-                            value=f"```cs\n{recipient_miner.level:,d}```", inline=True)
-            await ctx.send(embed=embed)
-        
-        elif item_type == 'level':
-            user.level -= 1
-            recipient.level -= 1
-            session.commit()
-            embed = discord.Embed(title=f"{user.name} Blew Up!!", color=discord.Color.red())
-            embed.add_field(name=f"{recipient.name}'s' Level",
-                            value=f"```cs\n{recipient.level:,d}```", inline=True)
-            embed.add_field(name=f"{user.name} Level",
-                            value=f"```cs\n{user.level:,d}```", inline=True)
-            await ctx.send(embed=embed)
-
-
-# @bot.command(name='rag', help='Rag a player. Format: .rag User')
-# async def rag(ctx, tagged_user=None):
-#     user = session.query(User).filter_by(name=ctx.author.name).first()
-
-#     if not tagged_user:
-#         await ctx.send('You must tag someone.')
-#         return
-
-#     members = ctx.message.mentions
-#     if members:
-#         member_name = members[0].name
-
-#     if not members:
-#         await ctx.send('You must tag someone to sacrifice yourself.')
-#         return
-
-#     recipient = session.query(User).filter_by(name=member_name).first()
-
-#     if not recipient:
-#         await ctx.send('User does not exist. They must create an account by typing !bal')
-#         return
-    
-#     professions = session.query(Profession).filter_by(user_id=user.id, profession_id=5).first()
-#     if not professions:
-#         await ctx.send('You need to be a ragger to use this command.')
-#         return
-#     else:
-        
-#         user_miner = session.query(Miner).filter_by(user_id=user.id).first()
-#         recipient_miner = session.query(Miner).filter_by(user_id=recipient.id).first()
-
-#         # 60% hits wallet
-#         # 40% hits bank
-
-#         # if wallet
-#             # 0 to 100
-#         # if bank
-#             # 65% - Failure
-#             # 25% - 50%
-#             # 15% - Clean completely 
-
-#         user.level -= 1
-#         recipient.level -= 1
-#         session.commit()
-#         embed = discord.Embed(title=f"{user.name} Blew Up!!", color=discord.Color.red())
-#         embed.add_field(name=f"{recipient.name}'s' Miner Level",
-#                         value=f"```cs\n${recipient_miner.level:,d}```", inline=True)
-#         embed.add_field(name=f"{user.name} Miner Level",
-#                         value=f"```cs\n${user_miner.level:,d}```", inline=True)
-#         await ctx.send(embed=embed)
-
 
 @bot.command(name='setlevel', help='Admin command only.')
 async def setlevel(ctx, tagged_user, amount):
@@ -2604,11 +2420,6 @@ async def rob(ctx, tagged_user):
         rob_user = False
         time_delta = datetime.datetime.now() - user.last_rob
         minutes = round(time_delta.total_seconds() / 60,0)
-        
-        thief = False
-        professions = session.query(Profession).filter_by(user_id=user.id, profession_id=1).first()
-        if professions:
-            thief = True
 
         if minutes > 20 or (thief and minutes > 10):
             rob_user = True
@@ -2622,87 +2433,35 @@ async def rob(ctx, tagged_user):
             await ctx.send(embed=embed)
         
         if rob_user:
-            if not thief:
-                rob_result = random.randint(1,10)
-                if rob_result >= 6:
-                    if recipient.shields > 0:
-                        recipient.shields -= 1
-                        user.wallet -= 1500
-                        embed = discord.Embed(title=f"{recipient.name} defended the attack!", color=discord.Color.red())
-                        embed.add_field(name="Shields Remaining",
-                                        value=f"```cs\n{str(recipient.shields)}```", inline=True)
-                        await ctx.send(embed=embed)
-                    else:
-                        proportion_to_take = random.uniform(0,1)
-                        amount_to_take = int(proportion_to_take * recipient.wallet)
-                        user.wallet += amount_to_take
-                        recipient.wallet -= amount_to_take
-
-                        embed = discord.Embed(title=f"You Robbed {recipient.name}", color=discord.Color.green())
-                        embed.add_field(name=f"Amount Stolen",
-                                        value=f"```cs\n${amount_to_take:,d} Gold```", inline=False)
-                        embed.add_field(name=f"{recipient.name}'s' Wallet",
-                                        value=f"```cs\n${recipient.wallet:,d} Gold```", inline=True)
-                        embed.add_field(name=f"Your Wallet",
-                                        value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
-                        await ctx.send(embed=embed)
-
-                elif rob_result >= 3:
+            rob_result = random.randint(1,10)
+            if rob_result >= 6:
+                if recipient.shields > 0 and random.randint(0,1):
+                    recipient.shields -= 1
                     user.wallet -= 1500
-                    embed = discord.Embed(title=f"{recipient.name} got away!", color=discord.Color.red())
-                    embed.add_field(name=f"Amount Stolen",
-                                    value=f"```cs\n${0} Gold```", inline=False)
+                    embed = discord.Embed(title=f"{recipient.name} defended the attack!", color=discord.Color.red())
+                    embed.add_field(name="Shields Remaining",
+                                    value=f"```cs\n{str(recipient.shields)}```", inline=True)
                     await ctx.send(embed=embed)
-
                 else:
-                    proportion_to_give = random.uniform(0,0.5)
-                    amount_to_give = max(int(proportion_to_give * user.wallet), int(0.1 * user.bank))
-                    
-                    if amount_to_give > user.wallet:
-                        user.bank -= amount_to_give
-                    else:
-                        user.wallet -= amount_to_give
+                    proportion_to_take = random.uniform(0,1)
+                    amount_to_take = int(proportion_to_take * recipient.wallet)
+                    user.wallet += amount_to_take
+                    recipient.wallet -= amount_to_take
 
-                    recipient.wallet += amount_to_give
-
-                    embed = discord.Embed(title=f"You lost the fight and {recipient.name} Robbed you back!", color=discord.Color.red())
-                    embed.add_field(name=f"Amount Lost",
-                                    value=f"```cs\n${amount_to_give:,d} Gold```", inline=False)
+                    embed = discord.Embed(title=f"You Robbed {recipient.name}", color=discord.Color.green())
+                    embed.add_field(name=f"Amount Stolen",
+                                    value=f"```cs\n${amount_to_take:,d} Gold```", inline=False)
                     embed.add_field(name=f"{recipient.name}'s' Wallet",
                                     value=f"```cs\n${recipient.wallet:,d} Gold```", inline=True)
                     embed.add_field(name=f"Your Wallet",
                                     value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
                     await ctx.send(embed=embed)
             else:
-                rob_result = random.randint(1,10)
-                if rob_result >= 6:
-                    if recipient.shields > 0 and random.randint(0,1):
-                        recipient.shields -= 1
-                        user.wallet -= 1500
-                        embed = discord.Embed(title=f"{recipient.name} defended the attack!", color=discord.Color.red())
-                        embed.add_field(name="Shields Remaining",
-                                        value=f"```cs\n{str(recipient.shields)}```", inline=True)
-                        await ctx.send(embed=embed)
-                    else:
-                        proportion_to_take = random.uniform(0,1)
-                        amount_to_take = int(proportion_to_take * recipient.wallet)
-                        user.wallet += amount_to_take
-                        recipient.wallet -= amount_to_take
-
-                        embed = discord.Embed(title=f"You Robbed {recipient.name}", color=discord.Color.green())
-                        embed.add_field(name=f"Amount Stolen",
-                                        value=f"```cs\n${amount_to_take:,d} Gold```", inline=False)
-                        embed.add_field(name=f"{recipient.name}'s' Wallet",
-                                        value=f"```cs\n${recipient.wallet:,d} Gold```", inline=True)
-                        embed.add_field(name=f"Your Wallet",
-                                        value=f"```cs\n${user.wallet:,d} Gold```", inline=True)
-                        await ctx.send(embed=embed)
-                else:
-                    user.wallet -= 1500
-                    embed = discord.Embed(title=f"{recipient.name} got away!", color=discord.Color.red())
-                    embed.add_field(name=f"Amount Stolen",
-                                    value=f"```cs\n${0} Gold```", inline=False)
-                    await ctx.send(embed=embed)
+                user.wallet -= 1500
+                embed = discord.Embed(title=f"{recipient.name} got away!", color=discord.Color.red())
+                embed.add_field(name=f"Amount Stolen",
+                                value=f"```cs\n${0} Gold```", inline=False)
+                await ctx.send(embed=embed)
 
     session.commit()
 
