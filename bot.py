@@ -1735,8 +1735,8 @@ async def work(ctx):
             roll = random.randint(1,3)
             if roll == 3:
                 earnings *= 3
-
-            earnings *= 2
+            else:
+                earnings *= 2
 
 
         time_delta = datetime.datetime.now() - recent_job
