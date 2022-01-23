@@ -2421,21 +2421,18 @@ async def rob(ctx, tagged_user):
         time_delta = datetime.datetime.now() - user.last_rob
         minutes = round(time_delta.total_seconds() / 60,0)
 
-        if minutes > 20 or (thief and minutes > 10):
+        if minutes > 20:
             rob_user = True
             user.last_rob = datetime.datetime.now()
         else:
             time_remaining = int(20-minutes)
-            if thief:
-                time_remaining = int(10-minutes)
             embed = discord.Embed(title=f'Robbery', color=discord.Color.red())
             embed.add_field(name=f'{ctx.author.display_name}', value=f"{time_remaining} minutes remaining...", inline=False)
             await ctx.send(embed=embed)
-        
         if rob_user:
             rob_result = random.randint(1,10)
             if rob_result >= 6:
-                if recipient.shields > 0 and random.randint(0,1):
+                if recipient.shields > 0:
                     recipient.shields -= 1
                     user.wallet -= 1500
                     embed = discord.Embed(title=f"{recipient.name} defended the attack!", color=discord.Color.red())
