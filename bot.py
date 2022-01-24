@@ -1751,7 +1751,7 @@ async def work(ctx):
             tax_rate = get_tax(casino.level)
 
             embed = discord.Embed(title=f'Work Level {user.level}', color=discord.Color.green())
-            if roll == 3:
+            if (user.diamond == True or crafter) and roll == 3:
                 embed.add_field(name=f'The diamond shines brightly!', value=f"You won 3x your work amount!", inline=False)
             embed.add_field(name=f'{ctx.author.display_name}', value=f"You earned ${earnings:,d}", inline=False)
             embed.add_field(name="Wallet",
